@@ -15,12 +15,19 @@ import java.time.LocalDate;
 @AllArgsConstructor(staticName = "of")
 public class User {
     private Long id;
+
+    @NotBlank(message = "Имя не может быть пустым")
     private String name;
-    @Email
+
+    @Email(message = "Электронная почта должна быть корректной")
+    @NotBlank(message = "Электронная почта не может быть пустой")
     private String email;
-    @NotNull
-    @NotBlank
+
+    @NotNull(message = "Логин не может быть null")
+    @NotBlank(message = "Логин не может быть пустым и содержать пробелы")
     private String login;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @NotNull(message = "Дата рождения не может быть null")
     private LocalDate birthday;
 }

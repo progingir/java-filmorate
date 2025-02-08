@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -25,19 +24,13 @@ public class FilmController {
     //создание фильма
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film createFilm(@Valid @RequestBody Film film) throws NullPointerException, ValidationException {
+    public Film createFilm(@Valid @RequestBody Film film) {
         return filmService.createFilm(film);
-    }
-
-    //получение фильма по айдишнику
-    @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable("id") String id) throws ValidationException {
-        return filmService.getFilmById(Long.valueOf(id));
     }
 
     //обновление фильма
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) throws ValidationException, NotFoundException {
+    public Film update(@Valid @RequestBody Film newFilm) {
         return filmService.update(newFilm);
     }
 

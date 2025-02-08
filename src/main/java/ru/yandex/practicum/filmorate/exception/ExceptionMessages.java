@@ -3,8 +3,6 @@ package ru.yandex.practicum.filmorate.exception;
 public class ExceptionMessages {
 
     //текс для ValidationException(пользователь)
-    public static final String USER_ID_CANNOT_BE_NULL = "Идентификатор пользователя не может быть нулевой";
-    public static final String USER_NOT_FOUND = "Пользователь с данным идентификатором отсутствует в базе";
     public static final String EMAIL_CANNOT_BE_EMPTY = "Электронная почта не может быть пустой и должна содержать символ @";
     public static final String LOGIN_CANNOT_BE_EMPTY = "Логин не может быть пустым и содержать пробелы";
     public static final String BIRTHDAY_CANNOT_BE_IN_FUTURE = "Дата рождения не может быть в будущем";

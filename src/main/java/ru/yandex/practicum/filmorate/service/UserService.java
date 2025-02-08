@@ -3,10 +3,10 @@ package ru.yandex.practicum.filmorate.service;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.ExceptionMessages;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -20,108 +20,82 @@ public class UserService {
 
     private final Map<Long, User> users = new HashMap<>();
 
-
     public Collection<User> findAll() {
         log.info("Возвращаем список пользователей...");
         return users.values();
     }
 
-
-    public User findById(String id) throws ValidationException {
-        log.info("Находим пользователя по айди...");
-        if (id.isBlank()) {
-            log.error("Exception", new ValidationException(ExceptionMessages.USER_ID_CANNOT_BE_NULL));
-            throw new ValidationException(ExceptionMessages.USER_ID_CANNOT_BE_NULL);
-        } else for (User u : users.values())
-            if (u.getId().equals(Long.valueOf(id))) {
-                return u;
-            }
-        log.error("Exception", new ValidationException(ExceptionMessages.USER_NOT_FOUND));
-        throw new ValidationException(ExceptionMessages.USER_NOT_FOUND);
-    }
-
-
-    public User create(@Valid User user) throws ValidationException, DuplicatedDataException {
+    public User create(@Valid User user) {
         log.info("Создаем нового пользователя...");
         duplicateCheck(user);
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@") ||
-                user.getEmail().contains(" ") || user.getEmail().length() == 1) {
-            log.error("Exception", new ValidationException(ExceptionMessages.EMAIL_CANNOT_BE_EMPTY));
-            throw new ValidationException(ExceptionMessages.EMAIL_CANNOT_BE_EMPTY);
+
+        validateEmail(user.getEmail());
+        validateLogin(user.getLogin());
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
         }
-        if (user.getLogin() == null || user.getLogin().contains(" ") || user.getLogin().isBlank()) {
-            log.error("Exception", new ValidationException(ExceptionMessages.LOGIN_CANNOT_BE_EMPTY));
-            throw new ValidationException(ExceptionMessages.LOGIN_CANNOT_BE_EMPTY);
-        }
-        if (user.getName() == null || user.getName().isBlank()) user.setName(user.getLogin());
-        if (user.getBirthday() != null) {
-            if (user.getBirthday().isAfter(LocalDate.now())) {
-                log.error("Exception", new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_IN_FUTURE));
-                throw new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_IN_FUTURE);
-            }
-        } else {
-            log.error("Exception", new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_NULL));
-            throw new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_NULL);
-        }
+        validateBirthday(user.getBirthday());
+
         user.setId(getNextId());
         users.put(user.getId(), user);
         return user;
     }
 
-
     private long getNextId() {
-        long currentMaxId = users.keySet().stream().mapToLong(id -> id).max().orElse(0);
-        return ++currentMaxId;
+        return users.keySet().stream().mapToLong(id -> id).max().orElse(0) + 1;
     }
 
-
-    private void duplicateCheck(User user) throws DuplicatedDataException {
-        for (User u : users.values())
+    private void duplicateCheck(User user) {
+        for (User u : users.values()) {
             if (u.getEmail().equals(user.getEmail())) {
-                log.error("Exception", new DuplicatedDataException(ExceptionMessages.EMAIL_ALREADY_EXISTS));
-                throw new DuplicatedDataException(ExceptionMessages.EMAIL_ALREADY_EXISTS);
+                logAndThrow(new DuplicatedDataException(ExceptionMessages.EMAIL_ALREADY_EXISTS));
             }
+        }
     }
 
-
-    public User update(@Valid User newUser) throws ValidationException, NotFoundException, DuplicatedDataException {
+    public User update(@Valid User newUser) {
         if (newUser.getId() == null) {
-            log.error("Exception", new ValidationException(ExceptionMessages.ID_CANNOT_BE_NULL));
-            throw new ValidationException(ExceptionMessages.ID_CANNOT_BE_NULL);
+            logAndThrow(new ValidationException(ExceptionMessages.ID_CANNOT_BE_NULL));
         }
+
         if (users.containsKey(newUser.getId())) {
             User oldUser = users.get(newUser.getId());
-            if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@") ||
-                    newUser.getEmail().contains(" ") || newUser.getEmail().length() == 1) {
-                log.error("Exception", new ValidationException(ExceptionMessages.EMAIL_CANNOT_BE_EMPTY));
-                throw new ValidationException(ExceptionMessages.EMAIL_CANNOT_BE_EMPTY);
-            } else if (!newUser.getEmail().equals(oldUser.getEmail())) {
-                for (User u : users.values())
-                    if (u.getEmail().equals(newUser.getEmail())) {
-                        log.error("Exception", new DuplicatedDataException(ExceptionMessages.EMAIL_ALREADY_EXISTS));
-                        throw new DuplicatedDataException(ExceptionMessages.EMAIL_ALREADY_EXISTS);
-                    }
-                oldUser.setEmail(newUser.getEmail());
-            }
-            if (newUser.getLogin() == null || newUser.getLogin().contains(" ") || newUser.getLogin().isBlank()) {
-                log.error("Exception", new ValidationException(ExceptionMessages.LOGIN_CANNOT_BE_EMPTY));
-                throw new ValidationException(ExceptionMessages.LOGIN_CANNOT_BE_EMPTY);
-            } else oldUser.setLogin(newUser.getLogin());
-            if (newUser.getName() == null || newUser.getName().isBlank()) oldUser.setName(newUser.getLogin());
-            else oldUser.setName(newUser.getName());
-            if (newUser.getBirthday() != null) {
-                if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                    log.error("Exception", new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_IN_FUTURE));
-                    throw new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_IN_FUTURE);
-                } else oldUser.setBirthday(newUser.getBirthday());
-            } else {
-                log.error("Exception", new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_NULL));
-                throw new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_NULL);
-            }
+
+            oldUser.setEmail(newUser.getEmail());
+            oldUser.setLogin(newUser.getLogin());
+            oldUser.setName(newUser.getName() != null ? newUser.getName() : newUser.getLogin());
+            oldUser.setBirthday(newUser.getBirthday());
             return oldUser;
         } else {
-            log.error("Exception", new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден"));
-            throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+            logAndThrow(new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден"));
         }
+        return null;
+    }
+
+    private void validateEmail(String email) {
+        if (email == null || email.isBlank() || !email.contains("@") || email.contains(" ") || email.length() == 1) {
+            logAndThrow(new ValidationException(ExceptionMessages.EMAIL_CANNOT_BE_EMPTY));
+        }
+    }
+
+    private void validateLogin(String login) {
+        if (login == null || login.contains(" ") || login.isBlank()) {
+            logAndThrow(new ValidationException(ExceptionMessages.LOGIN_CANNOT_BE_EMPTY));
+        }
+    }
+
+    private void validateBirthday(LocalDate birthday) {
+        if (birthday != null) {
+            if (birthday.isAfter(LocalDate.now())) {
+                logAndThrow(new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_IN_FUTURE));
+            }
+        } else {
+            logAndThrow(new ValidationException(ExceptionMessages.BIRTHDAY_CANNOT_BE_NULL));
+        }
+    }
+
+    private void logAndThrow(RuntimeException exception) {
+        log.error(exception.getMessage());
+        throw exception;
     }
 }

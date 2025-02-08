@@ -4,9 +4,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -29,23 +26,16 @@ public class UserController {
         return userService.findAll();
     }
 
-    //получает пользователя по его идентификатору
-    @GetMapping("/{id}")
-    public User findById(@PathVariable("id") String id) throws ValidationException {
-        return userService.findById(id);
-    }
-
     //создает нового пользователя
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User create(@Valid @RequestBody User user) throws ValidationException, DuplicatedDataException {
+    public User create(@Valid @RequestBody User user) {
         return userService.create(user);
     }
 
     //обновляет информацию о существующем пользователе
     @PutMapping
-    public User update(@Valid @RequestBody User newUser) throws ValidationException, NotFoundException,
-            DuplicatedDataException {
+    public User update(@Valid @RequestBody User newUser) {
         return userService.update(newUser);
     }
 }
