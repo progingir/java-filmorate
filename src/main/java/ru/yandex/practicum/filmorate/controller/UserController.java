@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -20,22 +23,54 @@ public class UserController {
         this.userService = userService;
     }
 
-    //получает список всех пользователей
+    // Получение всех пользователей
     @GetMapping
     public Collection<User> findAll() {
         return userService.findAll();
     }
 
-    //создает нового пользователя
+    // Создание пользователя
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public User create(@Valid @RequestBody User user) {
         return userService.create(user);
     }
 
-    //обновляет информацию о существующем пользователе
+    // Обновление пользователя
     @PutMapping
-    public User update(@Valid @RequestBody User newUser) {
-        return userService.update(newUser);
+    public User update(@Valid @RequestBody User user) throws NotFoundException {
+        return userService.update(user);
+    }
+
+    // Получение пользователя по ID
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) throws NotFoundException {
+        return userService.getUserById(id);
+    }
+
+    // Добавление друга
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) throws NotFoundException {
+        userService.addFriend(id, friendId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Удаление друга
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<Void> removeFriend(@PathVariable Long id, @PathVariable Long friendId) throws NotFoundException {
+        userService.removeFriend(id, friendId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Получение списка друзей пользователя
+    @GetMapping("/{id}/friends")
+    public Collection<User> getFriends(@PathVariable Long id) throws NotFoundException {
+        return userService.getFriends(id);
+    }
+
+    // Получение общих друзей двух пользователей
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) throws NotFoundException {
+        return userService.getCommonFriends(id, otherId);
     }
 }

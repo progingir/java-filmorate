@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +31,5 @@ public class User {
     @NotNull(message = "Дата рождения не может быть null")
     private LocalDate birthday;
 
-    // Поле для хранения ID друзей пользователя
     private Set<Long> friends = new HashSet<>();
 }

@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -20,22 +23,48 @@ public class FilmController {
         this.filmService = filmService;
     }
 
-    //создание фильма
+    // Создание фильма
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film createFilm(@Valid @RequestBody Film film) {
         return filmService.createFilm(film);
     }
 
-    //обновление фильма
+    // Обновление фильма
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
-        return filmService.update(newFilm);
+    public Film update(@Valid @RequestBody Film film) throws NotFoundException {
+        return filmService.update(film);
     }
 
-    //получение всех фильмов
+    // Получение всех фильмов
     @GetMapping
     public Collection<Film> getFilms() {
         return filmService.getFilms();
+    }
+
+    // Получение фильма по ID
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable Long id) throws NotFoundException {
+        return filmService.getFilmById(id);
+    }
+
+    // Добавление лайка к фильму
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) throws NotFoundException {
+        filmService.addLike(id, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Удаление лайка из фильма
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<Void> removeLike(@PathVariable Long id, @PathVariable Long userId) throws NotFoundException {
+        filmService.removeLike(id, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Получение топ-N популярных фильмов
+    @GetMapping("/popular")
+    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getTopFilms(count);
     }
 }
