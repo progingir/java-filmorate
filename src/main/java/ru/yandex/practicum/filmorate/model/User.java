@@ -7,15 +7,15 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(of = {"email"})
 @AllArgsConstructor(staticName = "of")
 public class User {
     private Long id;
-
     private String name;
 
     @Email(message = "Электронная почта должна быть корректной")
@@ -29,4 +29,7 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd")
     @NotNull(message = "Дата рождения не может быть null")
     private LocalDate birthday;
+
+    // Поле для хранения ID друзей пользователя
+    private Set<Long> friends = new HashSet<>();
 }
