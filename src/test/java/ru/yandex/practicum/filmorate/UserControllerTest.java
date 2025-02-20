@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -9,8 +8,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -27,10 +24,8 @@ public class UserControllerTest {
     private static User invalidEmailUser;
     private static User duplicateEmailUser;
     private static User invalidLoginUser;
-    private static User invalidBirthdayUser;
     private static User userWithNoId;
     private static User userWithWrongId;
-    private static UserService userService;
 
     @BeforeAll
     public static void start() throws ValidationException, DuplicatedDataException {
@@ -49,9 +44,6 @@ public class UserControllerTest {
 
         // Пользователь с некорректным логином (с пробелами)
         invalidLoginUser = User.of(0L, "Invalid Login User", "login@mail.ru", "invalid login", LocalDate.parse("2000-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd")), new HashSet<>());
-
-        // Пользователь с некорректной датой рождения (в будущем)
-        invalidBirthdayUser = User.of(0L, "Invalid Birthday User", "birthday@mail.ru", "birthdayLogin", LocalDate.parse("2025-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd")), new HashSet<>());
 
         // Пользователь без ID
         userWithNoId = User.of(null, "No ID User", "noid@mail.ru", "noIdLogin", LocalDate.parse("2000-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd")), new HashSet<>());
