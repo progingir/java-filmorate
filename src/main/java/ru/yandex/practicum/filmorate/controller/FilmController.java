@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -26,13 +26,13 @@ public class FilmController {
     // Создание фильма
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film createFilm(@Valid @RequestBody Film film) {
+    public Film createFilm(@Valid @RequestBody Film film) throws ValidationException {
         return filmService.createFilm(film);
     }
 
     // Обновление фильма
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) throws NotFoundException {
+    public Film update(@Valid @RequestBody Film film) throws NotFoundException, ValidationException {
         return filmService.update(film);
     }
 
@@ -66,5 +66,18 @@ public class FilmController {
     @GetMapping("/popular")
     public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
         return filmService.getTopFilms(count);
+    }
+
+    // Обработка исключений
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleValidationException(ValidationException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 }
