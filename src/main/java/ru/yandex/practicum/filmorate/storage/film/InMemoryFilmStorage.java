@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
@@ -18,7 +17,6 @@ import java.util.*;
 public class InMemoryFilmStorage implements FilmStorage {
 
     private static final Map<Long, Film> films = new HashMap<>();
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public Collection<Film> findAll() {
