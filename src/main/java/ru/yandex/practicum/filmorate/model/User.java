@@ -9,13 +9,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(of = {"email"})
 @AllArgsConstructor(staticName = "of")
 public class User {
     private Long id;
-
     private String name;
 
     @Email(message = "Электронная почта должна быть корректной")
@@ -29,4 +30,6 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd")
     @NotNull(message = "Дата рождения не может быть null")
     private LocalDate birthday;
+
+    private Set<Long> friends = new HashSet<>();
 }
