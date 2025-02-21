@@ -94,7 +94,7 @@ public class FilmControllerTest {
             filmController.createFilm(invalidFilmName);
         });
         assertNotNull(exception);
-        assertEquals("Название фильма не может быть пустым", exception.getMessage());
+        assertEquals("Film name cannot be empty", exception.getMessage());
     }
 
     @Test
@@ -103,7 +103,7 @@ public class FilmControllerTest {
             filmController.createFilm(invalidFilmReleaseDate);
         });
         assertNotNull(exception);
-        assertEquals("Дата релиза фильма не может быть раньше 28 декабря 1895 года", exception.getMessage());
+        assertEquals("Film release date cannot be earlier than December 28, 1895", exception.getMessage());
     }
 
     @Test

@@ -58,7 +58,7 @@ public class UserControllerTest {
             userController.create(invalidEmailUser);
         });
         assertNotNull(exception);
-        assertEquals("Некорректный email", exception.getMessage());
+        assertEquals("Invalid email", exception.getMessage());
     }
 
     @Test
@@ -67,7 +67,7 @@ public class UserControllerTest {
             userController.create(duplicateEmailUser);
         });
         assertNotNull(exception);
-        assertEquals("Пользователь с таким email уже существует", exception.getMessage());
+        assertEquals("A user with this email already exists", exception.getMessage());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class UserControllerTest {
             userController.create(invalidLoginUser);
         });
         assertNotNull(exception);
-        assertEquals("Логин не может быть пустым или содержать пробелы", exception.getMessage());
+        assertEquals("Login cannot be empty or contain spaces", exception.getMessage());
     }
 
 
@@ -86,7 +86,7 @@ public class UserControllerTest {
             userController.update(userWithNoId);
         });
         assertNotNull(exception);
-        assertEquals("ID пользователя не может быть null", exception.getMessage());
+        assertEquals("User ID cannot be null", exception.getMessage());
     }
 
     @Test
@@ -95,6 +95,6 @@ public class UserControllerTest {
             userController.update(userWithWrongId);
         });
         assertNotNull(exception);
-        assertEquals("Пользователь с ID = 999 не найден", exception.getMessage());
+        assertEquals("User with ID = 999 not found", exception.getMessage());
     }
 }
