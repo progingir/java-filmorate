@@ -13,12 +13,11 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
-
     private final Map<Long, User> users = new HashMap<>();
 
     @Override
     public Collection<User> findAll() {
-        log.info("Возвращаем список пользователей...");
+        log.info("Returning the list of users...");
         return users.values();
     }
 
@@ -39,7 +38,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(@Valid User newUser) throws NotFoundException {
         if (newUser.getId() == null) {
-            logAndThrow(new ValidationException("ID пользователя не может быть null"));
+            logAndThrow(new ValidationException("User ID cannot be null"));
         }
         if (users.containsKey(newUser.getId())) {
             User oldUser = users.get(newUser.getId());
@@ -49,18 +48,18 @@ public class InMemoryUserStorage implements UserStorage {
             oldUser.setBirthday(newUser.getBirthday());
             return oldUser;
         } else {
-            logAndThrow(new NotFoundException("Пользователь с ID = " + newUser.getId() + " не найден"));
+            logAndThrow(new NotFoundException("User with ID = " + newUser.getId() + " not found"));
         }
         return null;
     }
 
     public User findById(Long id) throws NotFoundException {
         if (id == null) {
-            logAndThrow(new ValidationException("ID не может быть null"));
+            logAndThrow(new ValidationException("ID cannot be null"));
         }
         User user = users.get(id);
         if (user == null) {
-            logAndThrow(new NotFoundException("Пользователь с ID = " + id + " не найден"));
+            logAndThrow(new NotFoundException("User with ID = " + id + " not found"));
         }
         return user;
     }
@@ -71,7 +70,7 @@ public class InMemoryUserStorage implements UserStorage {
         User friend = findById(friendId);
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
-        log.info("Пользователь с ID = {} добавлен в друзья к пользователю с ID = {}", friendId, userId);
+        log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
     }
 
     @Override
@@ -80,7 +79,7 @@ public class InMemoryUserStorage implements UserStorage {
         User friend = findById(friendId);
         user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
-        log.info("Пользователь с ID = {} удален из друзей пользователя с ID = {}", friendId, userId);
+        log.info("User with ID = {} has been removed from friends of user with ID = {}", friendId, userId);
     }
 
     public Collection<User> getFriends(Long id) throws NotFoundException {
@@ -108,29 +107,29 @@ public class InMemoryUserStorage implements UserStorage {
     private void duplicateCheck(User user) {
         for (User u : users.values()) {
             if (u.getEmail().equals(user.getEmail())) {
-                logAndThrow(new DuplicatedDataException("Пользователь с таким email уже существует"));
+                logAndThrow(new DuplicatedDataException("A user with this email already exists"));
             }
         }
     }
 
     private void validateEmail(String email) {
         if (email == null || email.isBlank() || !email.contains("@") || email.contains(" ") || email.length() == 1) {
-            logAndThrow(new ValidationException("Некорректный email"));
+            logAndThrow(new ValidationException("Invalid email"));
         }
     }
 
     private void validateLogin(String login) {
         if (login == null || login.contains(" ") || login.isBlank()) {
-            logAndThrow(new ValidationException("Логин не может быть пустым или содержать пробелы"));
+            logAndThrow(new ValidationException("Login cannot be empty or contain spaces"));
         }
     }
 
     private void validateBirthday(LocalDate birthday) {
         if (birthday == null) {
-            logAndThrow(new ValidationException("Дата рождения не может быть null"));
+            logAndThrow(new ValidationException("Birthday cannot be null"));
         }
         if (birthday.isAfter(LocalDate.now())) {
-            logAndThrow(new ValidationException("Дата рождения не может быть в будущем"));
+            logAndThrow(new ValidationException("Birthday cannot be in the future"));
         }
     }
 
