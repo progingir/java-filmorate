@@ -32,7 +32,6 @@ public class InMemoryUserStorage implements UserStorage {
         }
         validateBirthday(user.getBirthday());
         user.setId(getNextId());
-        user.setFriends(new HashSet<>()); // Инициализируем множество друзей
         users.put(user.getId(), user);
         return user;
     }

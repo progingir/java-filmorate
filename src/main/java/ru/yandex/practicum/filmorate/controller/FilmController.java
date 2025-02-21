@@ -23,52 +23,52 @@ public class FilmController {
         this.filmService = filmService;
     }
 
-    // Создание фильма
+    //создание фильма
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film createFilm(@Valid @RequestBody Film film) throws ValidationException {
+    public Film createFilm(@Valid @RequestBody Film film) {
         return filmService.createFilm(film);
     }
 
-    // Обновление фильма
+    //обновление фильма
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) throws NotFoundException, ValidationException {
+    public Film update(@Valid @RequestBody Film film) {
         return filmService.update(film);
     }
 
-    // Получение всех фильмов
+    //получение всех фильмов
     @GetMapping
     public Collection<Film> getFilms() {
         return filmService.getFilms();
     }
 
-    // Получение фильма по ID
+    //получение фильма по ID
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable Long id) throws NotFoundException {
+    public Film getFilmById(@PathVariable Long id) {
         return filmService.getFilmById(id);
     }
 
-    // Добавление лайка к фильму
+    //добавление лайка к фильму
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) throws NotFoundException {
+    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
         filmService.addLike(id, userId);
         return ResponseEntity.ok().build();
     }
 
-    // Удаление лайка из фильма
+    //удаление лайка из фильма
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<Void> removeLike(@PathVariable Long id, @PathVariable Long userId) throws NotFoundException {
+    public ResponseEntity<Void> removeLike(@PathVariable Long id, @PathVariable Long userId) {
         filmService.removeLike(id, userId);
         return ResponseEntity.ok().build();
     }
 
-    // Получение топ-N популярных фильмов
+    //получение популярных фильмов
     @GetMapping("/popular")
     public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
         return filmService.getTopFilms(count);
     }
 
-    // Обработка исключений
+    //обработка исключений
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<String> handleValidationException(ValidationException ex) {

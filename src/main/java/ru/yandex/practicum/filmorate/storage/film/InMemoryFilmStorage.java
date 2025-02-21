@@ -42,7 +42,6 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film create(@Valid Film film) {
         validateFilm(film);
         film.setId(getNextId());
-        film.setLikedUsers(new HashSet<>()); // Инициализируем множество лайков
         films.put(film.getId(), film);
         return film;
     }
@@ -63,14 +62,14 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public void addLike(Long filmId, Long userId) throws NotFoundException {
-        Film film = findById(filmId); // Проверяем существование фильма
-        film.getLikedUsers().add(userId); // Добавляем пользователя в список лайкнувших
+        Film film = findById(filmId);
+        film.getLikedUsers().add(userId);
         log.info("Пользователь с ID = {} поставил лайк фильму с ID = {}", userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
-        Film film = findById(filmId); // Проверяем существование фильма
-        film.getLikedUsers().remove(userId); // Удаляем пользователя из списка лайкнувших
+        Film film = findById(filmId);
+        film.getLikedUsers().remove(userId);
         log.info("Пользователь с ID = {} удалил лайк с фильма с ID = {}", userId, filmId);
     }
 
