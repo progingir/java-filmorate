@@ -18,72 +18,40 @@ public class UserController {
 
     private final UserService userService;
 
-    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    //получение всех пользователей
-    @GetMapping
-    public Collection<User> findAll() {
-        return userService.findAll();
-    }
-
-    //создание пользователя
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User create(@Valid @RequestBody User user) throws ValidationException {
+    public User create(@RequestBody User user) {
         return userService.create(user);
     }
 
-    //обновление пользователя
     @PutMapping
-    public User update(@Valid @RequestBody User user) throws NotFoundException, ValidationException {
+    public User update(@RequestBody User user) {
         return userService.update(user);
     }
 
-    //получение пользователя по ID
-    @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) throws NotFoundException {
-        return userService.getUserById(id);
-    }
-
-    //добавление друга
     @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) throws NotFoundException {
         userService.addFriend(id, friendId);
         return ResponseEntity.ok().build();
     }
 
-    //удаление друга
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<Void> removeFriend(@PathVariable Long id, @PathVariable Long friendId) throws NotFoundException {
         userService.removeFriend(id, friendId);
         return ResponseEntity.ok().build();
     }
 
-    //получение списка друзей пользователя
     @GetMapping("/{id}/friends")
     public Collection<User> getFriends(@PathVariable Long id) throws NotFoundException {
         return userService.getFriends(id);
     }
 
-    //получение общих друзей двух пользователей
     @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) throws NotFoundException {
         return userService.getCommonFriends(id, otherId);
-    }
-
-    //обработка исключений
-    @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleValidationException(ValidationException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 }

@@ -25,21 +25,21 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User create(@Valid User user) {
-        duplicateCheck(user);
+    public User create(User user) throws ValidationException, DuplicatedDataException {
         validateEmail(user.getEmail());
         validateLogin(user.getLogin());
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         validateBirthday(user.getBirthday());
+        duplicateCheck(user);
         user.setId(getNextId());
         users.put(user.getId(), user);
         return user;
     }
 
     @Override
-    public User update(@Valid User newUser) throws NotFoundException {
+    public User update(User newUser) throws NotFoundException, ValidationException {
         if (newUser.getId() == null) {
             log.error("User ID cannot be null");
             throw new ValidationException("User ID cannot be null");
@@ -110,30 +110,30 @@ public class InMemoryUserStorage implements UserStorage {
         return users.keySet().stream().mapToLong(id -> id).max().orElse(0) + 1;
     }
 
-    private void duplicateCheck(User user) {
+    private void duplicateCheck(User user) throws DuplicatedDataException {
         for (User u : users.values()) {
             if (u.getEmail().equals(user.getEmail())) {
-                log.error("A user with this email already exists");
+                log.error("A user with this email already exists: {}", user.getEmail());
                 throw new DuplicatedDataException("A user with this email already exists");
             }
         }
     }
 
-    private void validateEmail(String email) {
-        if (email == null || email.isBlank() || !email.contains("@") || email.contains(" ") || email.length() == 1) {
-            log.error("Invalid email");
+    private void validateEmail(String email) throws ValidationException {
+        if (email == null || email.isBlank() || !email.contains("@") || email.contains(" ") || email.length() < 2) {
+            log.error("Invalid email: {}", email);
             throw new ValidationException("Invalid email");
         }
     }
 
-    private void validateLogin(String login) {
-        if (login == null || login.contains(" ") || login.isBlank()) {
-            log.error("Login cannot be empty or contain spaces");
+    private void validateLogin(String login) throws ValidationException {
+        if (login == null || login.isBlank() || login.contains(" ")) {
+            log.error("Invalid login: {}", login);
             throw new ValidationException("Login cannot be empty or contain spaces");
         }
     }
 
-    private void validateBirthday(LocalDate birthday) {
+    private void validateBirthday(LocalDate birthday) throws ValidationException {
         if (birthday == null) {
             log.error("Birthday cannot be null");
             throw new ValidationException("Birthday cannot be null");
