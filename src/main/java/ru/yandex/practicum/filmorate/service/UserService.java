@@ -1,8 +1,11 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -14,26 +17,24 @@ public class UserService {
 
     private final UserStorage userStorage;
 
+    @Autowired
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
     public Collection<User> findAll() {
-        log.info("Возвращаем список пользователей...");
         return userStorage.findAll();
     }
 
-    public User create(User user) {
-        log.info("Создаем нового пользователя...");
+    public User create(User user) throws ValidationException, DuplicatedDataException {
         return userStorage.create(user);
     }
 
-    public User update(User user) throws NotFoundException {
-        log.info("Обновляем пользователя...");
+    public User update(User user) throws NotFoundException, ValidationException {
         return userStorage.update(user);
     }
 
-    public User getUserById(Long id) throws NotFoundException {
+    public User findById(Long id) throws NotFoundException, ValidationException {
         return userStorage.findById(id);
     }
 
@@ -49,7 +50,7 @@ public class UserService {
         return userStorage.getFriends(id);
     }
 
-    public Collection<User> getCommonFriends(Long id, Long otherId) throws NotFoundException {
-        return userStorage.getCommonFriends(id, otherId);
+    public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {
+        return userStorage.getCommonFriends(userId, otherUserId);
     }
 }
