@@ -87,6 +87,7 @@ public class InMemoryUserStorage implements UserStorage {
         log.info("User with ID = {} has been removed from friends of user with ID = {}", friendId, userId);
     }
 
+    @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
         return user.getFriends().stream()

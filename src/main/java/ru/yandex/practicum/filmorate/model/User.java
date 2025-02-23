@@ -19,16 +19,16 @@ public class User {
     private Long id;
     private String name;
 
-    @Email(message = "Электронная почта должна быть корректной")
-    @NotBlank(message = "Электронная почта не может быть пустой")
+    @Email(message = "Invalid email")
+    @NotBlank(message = "Email cannot be empty")
     private String email;
 
-    @NotNull(message = "Логин не может быть null")
-    @NotBlank(message = "Логин не может быть пустым и содержать пробелы")
+    @NotNull(message = "Login cannot be null")
+    @NotBlank(message = "Login cannot be empty or contain spaces")
     private String login;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @NotNull(message = "Дата рождения не может быть null")
+    @NotNull(message = "Birthday cannot be null")
     private LocalDate birthday;
 
     private Set<Long> friends = new HashSet<>();
