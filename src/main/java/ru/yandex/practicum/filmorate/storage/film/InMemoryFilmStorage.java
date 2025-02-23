@@ -20,7 +20,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Collection<Film> findAll() {
-        log.info("Обработка Get-запроса...");
+        log.info("Processing Get-request...");
         return films.values();
     }
 
@@ -64,17 +64,17 @@ public class InMemoryFilmStorage implements FilmStorage {
     public void addLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
         film.getLikedUsers().add(userId);
-        log.info("Пользователь с ID = {} поставил лайк фильму с ID = {}", userId, filmId);
+        log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
         film.getLikedUsers().remove(userId);
-        log.info("Пользователь с ID = {} удалил лайк с фильма с ID = {}", userId, filmId);
+        log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
     }
 
     public List<Film> getTopFilms(int count) {
-        log.info("Получение топ-{} фильмов по количеству лайков", count);
+        log.info("Getting top-{} films by number of likes", count);
         return films.values().stream()
                 .sorted((f1, f2) -> Integer.compare(f2.getLikedUsers().size(), f1.getLikedUsers().size()))
                 .limit(count)

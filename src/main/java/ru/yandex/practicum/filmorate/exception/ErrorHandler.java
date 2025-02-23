@@ -2,8 +2,8 @@ package ru.yandex.practicum.filmorate.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Map;
 
@@ -20,8 +20,13 @@ public class ErrorHandler {
         return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(DuplicatedDataException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicatedDataException(DuplicatedDataException e) {
+        return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
-        return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(Map.of("error", "Internal server error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

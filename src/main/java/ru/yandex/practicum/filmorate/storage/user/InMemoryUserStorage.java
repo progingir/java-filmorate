@@ -3,7 +3,9 @@ package ru.yandex.practicum.filmorate.storage.user;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.*;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
+
     private final Map<Long, User> users = new HashMap<>();
 
     @Override
@@ -38,28 +41,31 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(@Valid User newUser) throws NotFoundException {
         if (newUser.getId() == null) {
-            logAndThrow(new ValidationException("User ID cannot be null"));
+            log.error("User ID cannot be null");
+            throw new ValidationException("User ID cannot be null");
         }
-        if (users.containsKey(newUser.getId())) {
-            User oldUser = users.get(newUser.getId());
-            oldUser.setEmail(newUser.getEmail());
-            oldUser.setLogin(newUser.getLogin());
-            oldUser.setName(newUser.getName() != null ? newUser.getName() : newUser.getLogin());
-            oldUser.setBirthday(newUser.getBirthday());
-            return oldUser;
-        } else {
-            logAndThrow(new NotFoundException("User with ID = " + newUser.getId() + " not found"));
+        if (!users.containsKey(newUser.getId())) {
+            log.error("User with ID = {} not found", newUser.getId());
+            throw new NotFoundException("User with ID = " + newUser.getId() + " not found");
         }
-        return null;
+        User oldUser = users.get(newUser.getId());
+        oldUser.setEmail(newUser.getEmail());
+        oldUser.setLogin(newUser.getLogin());
+        oldUser.setName(newUser.getName() != null ? newUser.getName() : newUser.getLogin());
+        oldUser.setBirthday(newUser.getBirthday());
+        return oldUser;
     }
 
+    @Override
     public User findById(Long id) throws NotFoundException {
         if (id == null) {
-            logAndThrow(new ValidationException("ID cannot be null"));
+            log.error("ID cannot be null");
+            throw new ValidationException("ID cannot be null");
         }
         User user = users.get(id);
         if (user == null) {
-            logAndThrow(new NotFoundException("User with ID = " + id + " not found"));
+            log.error("User with ID = {} not found", id);
+            throw new NotFoundException("User with ID = " + id + " not found");
         }
         return user;
     }
@@ -107,34 +113,34 @@ public class InMemoryUserStorage implements UserStorage {
     private void duplicateCheck(User user) {
         for (User u : users.values()) {
             if (u.getEmail().equals(user.getEmail())) {
-                logAndThrow(new DuplicatedDataException("A user with this email already exists"));
+                log.error("A user with this email already exists");
+                throw new DuplicatedDataException("A user with this email already exists");
             }
         }
     }
 
     private void validateEmail(String email) {
         if (email == null || email.isBlank() || !email.contains("@") || email.contains(" ") || email.length() == 1) {
-            logAndThrow(new ValidationException("Invalid email"));
+            log.error("Invalid email");
+            throw new ValidationException("Invalid email");
         }
     }
 
     private void validateLogin(String login) {
         if (login == null || login.contains(" ") || login.isBlank()) {
-            logAndThrow(new ValidationException("Login cannot be empty or contain spaces"));
+            log.error("Login cannot be empty or contain spaces");
+            throw new ValidationException("Login cannot be empty or contain spaces");
         }
     }
 
     private void validateBirthday(LocalDate birthday) {
         if (birthday == null) {
-            logAndThrow(new ValidationException("Birthday cannot be null"));
+            log.error("Birthday cannot be null");
+            throw new ValidationException("Birthday cannot be null");
         }
         if (birthday.isAfter(LocalDate.now())) {
-            logAndThrow(new ValidationException("Birthday cannot be in the future"));
+            log.error("Birthday cannot be in the future");
+            throw new ValidationException("Birthday cannot be in the future");
         }
-    }
-
-    private void logAndThrow(RuntimeException exception) {
-        log.error(exception.getMessage());
-        throw exception;
     }
 }
