@@ -1,12 +1,9 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -25,7 +22,6 @@ public class FilmController {
 
     //создание фильма
     @PostMapping
-    //@ResponseStatus(HttpStatus.CREATED)
     public Film createFilm(@Valid @RequestBody Film film) {
         return filmService.createFilm(film);
     }
@@ -66,18 +62,5 @@ public class FilmController {
     @GetMapping("/popular")
     public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
         return filmService.getTopFilms(count);
-    }
-
-    //обработка исключений
-    @ExceptionHandler(ValidationException.class)
-    //@ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleValidationException(ValidationException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    //@ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 }
