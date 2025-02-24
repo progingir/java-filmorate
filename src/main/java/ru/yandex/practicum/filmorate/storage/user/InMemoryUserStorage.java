@@ -87,7 +87,6 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
-        // Находим пользователя и его друга
         User user = findById(userId);
         User friend = findById(friendId);
 
@@ -99,19 +98,14 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
-        // Добавляем друга в список друзей пользователя
+        // Добавляем friendId в список друзей user
         user.getFriends().add(friendId);
+
+        // Добавляем userId в список друзей friend
         friend.getFriends().add(userId);
 
-        // Сохраняем изменения
-        saveUser(user); // Сохраняем пользователя
-        saveUser(friend); // Сохраняем друга
-
-        return user;
-    }
-
-    public void saveUser(User user) {
-        users.put(user.getId(), user); // Сохраняем пользователя в Map
+        log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
+        return user; // Возвращаем обновленного пользователя
     }
 
 
@@ -138,16 +132,22 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
 
+        // Если у пользователя нет друзей, возвращаем пустой список
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Возвращаем список друзей как объекты User
         return user.getFriends().stream()
                 .map(friendId -> {
                     try {
-                        return findById(friendId);
+                        return findById(friendId); // Получаем объект User по ID
                     } catch (NotFoundException e) {
                         log.error("Friend with ID = {} not found", friendId);
                         return null;
                     }
                 })
-                .filter(Objects::nonNull)
+                .filter(Objects::nonNull) // Фильтруем null, если друг не найден
                 .collect(Collectors.toList());
     }
 
