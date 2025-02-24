@@ -13,9 +13,9 @@ public interface UserStorage {
 
     User update(User user) throws NotFoundException;
 
-    void addFriend(Long userId, Long friendId) throws NotFoundException;
+    User addFriend(Long userId, Long friendId) throws NotFoundException;
 
-    void removeFriend(Long userId, Long friendId) throws NotFoundException;
+    User removeFriend(Long userId, Long friendId) throws NotFoundException;
 
     Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException;
 

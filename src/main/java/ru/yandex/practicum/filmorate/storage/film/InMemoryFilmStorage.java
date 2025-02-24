@@ -58,18 +58,22 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void addLike(Long filmId, Long userId) throws NotFoundException {
+    public Film addLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
         film.getLikedUsers().add(userId);
+        log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
+        return film; // Возвращаем фильм с обновленным списком лайков
     }
 
     @Override
-    public void removeLike(Long filmId, Long userId) throws NotFoundException {
+    public Film removeLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
         if (!film.getLikedUsers().contains(userId)) {
             throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId));
         }
         film.getLikedUsers().remove(userId);
+        log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
+        return film; // Возвращаем фильм с обновленным списком лайков
     }
 
     @Override
