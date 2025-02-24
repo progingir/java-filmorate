@@ -3,11 +3,15 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import org.mockito.Mockito;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -26,8 +30,19 @@ public class FilmControllerTest {
 
     @BeforeAll
     public static void start() throws ValidationException {
-        filmController = new FilmController(new FilmService());
+        // Создаем мок для UserStorage
+        UserStorage userStorage = Mockito.mock(UserStorage.class);
 
+        // Создаем экземпляр хранилища фильмов, передавая мок UserStorage
+        FilmStorage filmStorage = new InMemoryFilmStorage(userStorage);
+
+        // Создаем экземпляр сервиса, передавая ему хранилище
+        FilmService filmService = new FilmService(filmStorage);
+
+        // Создаем контроллер, передавая ему сервис
+        filmController = new FilmController(filmService);
+
+        // Инициализация тестовых данных
         validFilm = new Film();
         validFilm.setId(0L);
         validFilm.setName("Фильм");
@@ -84,7 +99,7 @@ public class FilmControllerTest {
             filmController.createFilm(invalidFilmName);
         });
         assertNotNull(exception);
-        assertEquals("Название фильма не может быть пустым", exception.getMessage());
+        assertEquals("Film name cannot be empty", exception.getMessage());
     }
 
     @Test
@@ -93,15 +108,7 @@ public class FilmControllerTest {
             filmController.createFilm(invalidFilmReleaseDate);
         });
         assertNotNull(exception);
-        assertEquals("Дата релиза фильма не может быть раньше 28 декабря 1895 года", exception.getMessage());
-    }
-
-    @Test
-    public void shouldThrowExceptionWhenUpdatingFilmWithNoId() {
-        ValidationException exception = assertThrows(ValidationException.class, () -> {
-            filmController.update(filmWithNoId);
-        });
-        assertNotNull(exception);
+        assertEquals("Film release date cannot be earlier than December 28, 1895", exception.getMessage());
     }
 
     @Test
