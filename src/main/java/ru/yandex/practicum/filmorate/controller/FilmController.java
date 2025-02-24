@@ -25,7 +25,7 @@ public class FilmController {
 
     //создание фильма
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    //@ResponseStatus(HttpStatus.CREATED)
     public Film createFilm(@Valid @RequestBody Film film) {
         return filmService.createFilm(film);
     }
@@ -70,13 +70,13 @@ public class FilmController {
 
     //обработка исключений
     @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    //@ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<String> handleValidationException(ValidationException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    //@ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }

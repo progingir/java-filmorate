@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -32,5 +34,17 @@ public class ErrorHandler {
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Internal server error: " + e.getMessage()));
+    }
+
+    // Новый обработчик для MethodArgumentNotValidException
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        FieldError fieldError = e.getBindingResult().getFieldError();
+        String message = (fieldError != null)
+                ? fieldError.getDefaultMessage()
+                : "Validation failed";
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", message));
     }
 }
