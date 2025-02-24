@@ -18,18 +18,23 @@ import java.util.Set;
 public class User {
     private Long id;
     private String name;
-
     @Email(message = "Invalid email")
     @NotBlank(message = "Email cannot be empty")
     private String email;
-
     @NotNull(message = "Login cannot be null")
     @NotBlank(message = "Login cannot be empty or contain spaces")
     private String login;
-
     @JsonFormat(pattern = "yyyy-MM-dd")
     @NotNull(message = "Birthday cannot be null")
     private LocalDate birthday;
 
-    private Set<Long> friends = new HashSet<>();
+    private Set<Long> friends;
+
+    public Set<Long> getFriends() {
+        return friends == null ? new HashSet<>() : friends; // Защита от null
+    }
+
+    public void setFriends(Set<Long> friends) {
+        this.friends = friends == null ? new HashSet<>() : friends; // Защита от null
+    }
 }

@@ -75,27 +75,50 @@ public class InMemoryUserStorage implements UserStorage {
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
         User user = findById(userId);
         User friend = findById(friendId);
+
+        if (user.getFriends() == null) {
+            user.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+        }
+        if (friend.getFriends() == null) {
+            friend.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+        }
+
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
+
         log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
-        return user; // Возвращаем пользователя с обновленным списком друзей
+        return user;
     }
 
     @Override
     public User removeFriend(Long userId, Long friendId) throws NotFoundException {
         User user = findById(userId);
         User friend = findById(friendId);
+
+        if (user.getFriends() == null) {
+            user.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+        }
+        if (friend.getFriends() == null) {
+            friend.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+        }
+
         user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
+
         log.info("User with ID = {} has been removed from friends of user with ID = {}", friendId, userId);
-        return user; // Возвращаем пользователя с обновленным списком друзей
+        return user;
     }
 
     @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
-        // Возвращаем пустой список, если у пользователя нет друзей
-        return user.getFriends().isEmpty() ? Collections.emptyList() : user.getFriends().stream()
+
+        // Защита от null
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return user.getFriends().stream()
                 .map(users::get)
                 .collect(Collectors.toList());
     }
