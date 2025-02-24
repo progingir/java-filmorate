@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
-import java.util.Collections;
 
 @RestController
 @RequestMapping("/users")
@@ -59,11 +58,8 @@ public class UserController {
 
     @GetMapping("/{id}/friends")
     public Collection<User> getFriends(@PathVariable Long id) throws NotFoundException {
-        Collection<User> friends = userService.getFriends(id);
-        // Убедимся, что возвращаемое значение не null
-        return friends != null ? friends : Collections.emptyList();
+        return userService.getFriends(id);
     }
-
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) throws NotFoundException {

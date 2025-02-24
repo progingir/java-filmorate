@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.Collections;
 
 @Service
 @Slf4j
@@ -48,9 +47,7 @@ public class UserService {
     }
 
     public Collection<User> getFriends(Long id) throws NotFoundException {
-        Collection<User> friends = userStorage.getFriends(id);
-        // Убедимся, что возвращаемое значение не null
-        return friends != null ? friends : Collections.emptyList();
+        return userStorage.getFriends(id);
     }
 
     public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {

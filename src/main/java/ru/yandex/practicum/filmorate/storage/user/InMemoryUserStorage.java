@@ -34,18 +34,16 @@ public class InMemoryUserStorage implements UserStorage {
         duplicateCheck(user);
         user.setId(getNextId());
         users.put(user.getId(), user);
-        log.info("User  created: {}", user);
-        return user; // Возвращаем созданный объект пользователя
+        log.info("User created: {}", user);
+        return user;
     }
 
     @Override
     public User update(User newUser) throws NotFoundException, ValidationException {
         if (newUser.getId() == null) {
-            log.error("User ID cannot be null");
             throw new ValidationException("User ID cannot be null");
         }
         if (!users.containsKey(newUser.getId())) {
-            log.error("User with ID = {} not found", newUser.getId());
             throw new NotFoundException("User with ID = " + newUser.getId() + " not found");
         }
         User oldUser = users.get(newUser.getId());
@@ -59,16 +57,14 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User findById(Long id) throws NotFoundException {
         if (id == null) {
-            log.error("ID cannot be null");
             throw new ValidationException("ID cannot be null");
         }
         User user = users.get(id);
         if (user == null) {
-            log.error("User  with ID = {} not found", id);
-            throw new NotFoundException("User  with ID = " + id + " not found");
+            throw new NotFoundException("User with ID = " + id + " not found");
         }
-        log.info("User  found: {}", user);
-        return user; // Возвращаем объект пользователя
+        log.info("User found: {}", user);
+        return user;
     }
 
     @Override
@@ -77,10 +73,10 @@ public class InMemoryUserStorage implements UserStorage {
         User friend = findById(friendId);
 
         if (user.getFriends() == null) {
-            user.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+            user.setFriends(new HashSet<>());
         }
         if (friend.getFriends() == null) {
-            friend.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+            friend.setFriends(new HashSet<>());
         }
 
         user.getFriends().add(friendId);
@@ -96,10 +92,10 @@ public class InMemoryUserStorage implements UserStorage {
         User friend = findById(friendId);
 
         if (user.getFriends() == null) {
-            user.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+            user.setFriends(new HashSet<>());
         }
         if (friend.getFriends() == null) {
-            friend.setFriends(new HashSet<>()); // Инициализация, если friends равно null
+            friend.setFriends(new HashSet<>());
         }
 
         user.getFriends().remove(friendId);
@@ -113,7 +109,6 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
 
-        // Защита от null
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
             return Collections.emptyList();
         }
@@ -122,7 +117,6 @@ public class InMemoryUserStorage implements UserStorage {
                 .map(users::get)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {
@@ -142,7 +136,6 @@ public class InMemoryUserStorage implements UserStorage {
     private void duplicateCheck(User user) throws DuplicatedDataException {
         for (User u : users.values()) {
             if (u.getEmail().equals(user.getEmail())) {
-                log.error("A user with this email already exists: {}", user.getEmail());
                 throw new DuplicatedDataException("A user with this email already exists");
             }
         }
@@ -150,25 +143,21 @@ public class InMemoryUserStorage implements UserStorage {
 
     private void validateEmail(String email) throws ValidationException {
         if (email == null || email.isBlank() || !email.contains("@") || email.contains(" ") || email.length() < 2) {
-            log.error("Invalid email: {}", email);
             throw new ValidationException("Invalid email");
         }
     }
 
     private void validateLogin(String login) throws ValidationException {
         if (login == null || login.isBlank() || login.contains(" ")) {
-            log.error("Invalid login: {}", login);
             throw new ValidationException("Login cannot be empty or contain spaces");
         }
     }
 
     private void validateBirthday(LocalDate birthday) throws ValidationException {
         if (birthday == null) {
-            log.error("Birthday cannot be null");
             throw new ValidationException("Birthday cannot be null");
         }
         if (birthday.isAfter(LocalDate.now())) {
-            log.error("Birthday cannot be in the future");
             throw new ValidationException("Birthday cannot be in the future");
         }
     }
