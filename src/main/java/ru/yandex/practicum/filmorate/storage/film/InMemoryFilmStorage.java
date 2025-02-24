@@ -67,8 +67,13 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
     }
 
+    @Override
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
+        if (!film.getLikedUsers().contains(userId)) {
+            log.error("User with ID = {} did not like the film with ID = {}", userId, filmId);
+            throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId));
+        }
         film.getLikedUsers().remove(userId);
         log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
     }
