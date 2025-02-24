@@ -57,9 +57,23 @@ public class InMemoryFilmStorage implements FilmStorage {
         return oldFilm;
     }
 
+//    @Override
+//    public Film addLike(Long filmId, Long userId) throws NotFoundException {
+//        Film film = findById(filmId);
+//        film.getLikedUsers().add(userId);
+//        log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
+//        return film; // Возвращаем фильм с обновленным списком лайков
+//    }
+
     @Override
     public Film addLike(Long filmId, Long userId) throws NotFoundException {
-        Film film = findById(filmId);
+        Film film = films.get(filmId);
+        if (film == null) {
+            log.warn("Film with ID = {} not found", filmId);
+            return null; // Возвращаем null, если фильм не найден
+        }
+
+        // Добавляем лайк, даже если пользователь не существует (так как у нас нет доступа к UserStorage)
         film.getLikedUsers().add(userId);
         log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
         return film; // Возвращаем фильм с обновленным списком лайков

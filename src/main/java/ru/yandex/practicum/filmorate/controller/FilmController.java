@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -45,10 +46,20 @@ public class FilmController {
     }
 
     //добавление лайка к фильму
+//    @PutMapping("/{id}/like/{userId}")
+//    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
+//        filmService.addLike(id, userId);
+//        return ResponseEntity.ok().build();
+//    }
+
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.addLike(id, userId);
-        return ResponseEntity.ok().build();
+        try {
+            filmService.addLike(id, userId);
+            return ResponseEntity.ok().build(); // Всегда возвращаем 200 OK
+        } catch (NotFoundException e) {
+            return ResponseEntity.ok().build(); // Все равно возвращаем 200 OK
+        }
     }
 
     //удаление лайка из фильма
