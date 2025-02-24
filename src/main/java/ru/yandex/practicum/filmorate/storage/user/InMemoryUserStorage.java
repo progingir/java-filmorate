@@ -67,11 +67,31 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
+//    @Override
+//    public User addFriend(Long userId, Long friendId) throws NotFoundException {
+//        User user = findById(userId);
+//        User friend = findById(friendId);
+//
+//        if (user.getFriends() == null) {
+//            user.setFriends(new HashSet<>());
+//        }
+//        if (friend.getFriends() == null) {
+//            friend.setFriends(new HashSet<>());
+//        }
+//
+//        user.getFriends().add(friendId);
+//        friend.getFriends().add(userId);
+//
+//        return user;
+//    }
+
     @Override
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
+        // Находим пользователя и его друга
         User user = findById(userId);
         User friend = findById(friendId);
 
+        // Инициализируем списки друзей, если они null
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -79,10 +99,19 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
+        // Добавляем друга в список друзей пользователя
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
+        // Сохраняем изменения
+        saveUser(user); // Сохраняем пользователя
+        saveUser(friend); // Сохраняем друга
+
         return user;
+    }
+
+    public void saveUser(User user) {
+        users.put(user.getId(), user); // Сохраняем пользователя в Map
     }
 
 
