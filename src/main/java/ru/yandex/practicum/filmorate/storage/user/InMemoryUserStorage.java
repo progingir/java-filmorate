@@ -67,24 +67,6 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
-//    @Override
-//    public User addFriend(Long userId, Long friendId) throws NotFoundException {
-//        User user = findById(userId);
-//        User friend = findById(friendId);
-//
-//        if (user.getFriends() == null) {
-//            user.setFriends(new HashSet<>());
-//        }
-//        if (friend.getFriends() == null) {
-//            friend.setFriends(new HashSet<>());
-//        }
-//
-//        user.getFriends().add(friendId);
-//        friend.getFriends().add(userId);
-//
-//        return user;
-//    }
-
     @Override
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
         User user = findById(userId);
@@ -98,14 +80,16 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
-        // Добавляем friendId в список друзей user
+        // Добавляем друга в список друзей пользователя
         user.getFriends().add(friendId);
-
-        // Добавляем userId в список друзей friend
         friend.getFriends().add(userId);
 
+        // Сохраняем обновленных пользователей в хранилище
+        users.put(user.getId(), user);
+        users.put(friend.getId(), friend);
+
         log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
-        return user; // Возвращаем обновленного пользователя
+        return user;
     }
 
 
@@ -130,7 +114,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
-        User user = findById(id);
+        User user = findById(id); // Находим пользователя
 
         // Если у пользователя нет друзей, возвращаем пустой список
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
@@ -141,7 +125,7 @@ public class InMemoryUserStorage implements UserStorage {
         return user.getFriends().stream()
                 .map(friendId -> {
                     try {
-                        return findById(friendId); // Получаем объект User по ID
+                        return findById(friendId); // Находим объект User по ID
                     } catch (NotFoundException e) {
                         log.error("Friend with ID = {} not found", friendId);
                         return null;
