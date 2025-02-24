@@ -67,25 +67,6 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
-//    @Override
-//    public User addFriend(Long userId, Long friendId) throws NotFoundException {
-//        User user = findById(userId);
-//        User friend = findById(friendId);
-//
-//        if (user.getFriends() == null) {
-//            user.setFriends(new HashSet<>());
-//        }
-//        if (friend.getFriends() == null) {
-//            friend.setFriends(new HashSet<>());
-//        }
-//
-//        user.getFriends().add(friendId);
-//        friend.getFriends().add(userId);
-//
-//        log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
-//        return user;
-//    }
-
     @Override
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
         // Находим пользователя и его друга
@@ -107,6 +88,7 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
+
     @Override
     public User removeFriend(Long userId, Long friendId) throws NotFoundException {
         User user = findById(userId);
@@ -126,18 +108,36 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
+//    @Override
+//    public Collection<User> getFriends(Long userId) throws NotFoundException {
+//        User user = findById(userId);
+//
+//        // Защита от null
+//        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        // Возвращаем список друзей
+//        return user.getFriends().stream()
+//                .map(this::findById) // Преобразуем ID друзей в объекты User
+//                .collect(Collectors.toList());
+//    }
+
     @Override
-    public Collection<User> getFriends(Long userId) throws NotFoundException {
-        User user = findById(userId);
+    public Collection<User> getFriends(Long id) throws NotFoundException {
+        User user = findById(id);
 
-        // Защита от null
-        if (user.getFriends() == null || user.getFriends().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // Возвращаем список друзей
+        // Возвращаем список друзей как объекты User
         return user.getFriends().stream()
-                .map(this::findById) // Преобразуем ID друзей в объекты User
+                .map(friendId -> {
+                    try {
+                        return findById(friendId);
+                    } catch (NotFoundException e) {
+                        log.error("Friend with ID = {} not found", friendId);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull) // Фильтруем null, если друг не найден
                 .collect(Collectors.toList());
     }
 
@@ -145,10 +145,22 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {
         User user = findById(userId);
         User otherUser = findById(otherUserId);
+
+        // Находим общих друзей
         Set<Long> commonFriendIds = new HashSet<>(user.getFriends());
         commonFriendIds.retainAll(otherUser.getFriends());
+
+        // Возвращаем общих друзей как объекты User
         return commonFriendIds.stream()
-                .map(users::get)
+                .map(friendId -> {
+                    try {
+                        return findById(friendId);
+                    } catch (NotFoundException e) {
+                        log.error("Friend with ID = {} not found", friendId);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull) // Фильтруем null, если друг не найден
                 .collect(Collectors.toList());
     }
 
