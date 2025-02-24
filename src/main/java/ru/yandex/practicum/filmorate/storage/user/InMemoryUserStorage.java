@@ -68,30 +68,19 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User addFriend(Long userId, Long friendId) throws NotFoundException {
+    // В UserStorage или UserService
+    public void addFriend(Long userId, Long friendId) throws NotFoundException {
         User user = findById(userId);
         User friend = findById(friendId);
 
-        // Инициализируем списки друзей, если они null
-        if (user.getFriends() == null) {
-            user.setFriends(new HashSet<>());
-        }
-        if (friend.getFriends() == null) {
-            friend.setFriends(new HashSet<>());
-        }
-
-        // Добавляем друга в список друзей пользователя
+        // Добавляем друга в обе стороны
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
-        // Сохраняем обновленных пользователей в хранилище
-        users.put(user.getId(), user);
-        users.put(friend.getId(), friend);
-
-        log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
-        return user;
+        // Сохраняем изменения
+        update(user);
+        update(friend);
     }
-
 
     @Override
     public User removeFriend(Long userId, Long friendId) throws NotFoundException {
