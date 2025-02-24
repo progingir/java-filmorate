@@ -1,21 +1,31 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ExceptionMessages;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
 
     private static final Map<Long, Film> films = new HashMap<>();
+    private final UserStorage userStorage; // Добавляем UserStorage
+
+    @Autowired
+    public InMemoryFilmStorage(UserStorage userStorage) {
+        this.userStorage = userStorage; // Инициализируем UserStorage через конструктор
+    }
 
     @Override
     public Collection<Film> findAll() {
@@ -58,22 +68,44 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film addLike(Long filmId, Long userId) throws NotFoundException {
-        Film film = findById(filmId);
+    public void addLike(Long filmId, Long userId) throws NotFoundException {
+        Film film = findById(filmId); // Проверяем, существует ли фильм
+        if (film == null) {
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId));
+        }
+
+        // Проверяем, существует ли пользователь
+        User user = userStorage.findById(userId);
+        if (user == null) {
+            throw new NotFoundException(String.format("not found", userId));
+        }
+
+        // Добавляем лайк
         film.getLikedUsers().add(userId);
         log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
-        return film; // Возвращаем фильм с обновленным списком лайков
     }
 
     @Override
-    public Film removeLike(Long filmId, Long userId) throws NotFoundException {
-        Film film = findById(filmId);
+    public void removeLike(Long filmId, Long userId) throws NotFoundException {
+        Film film = findById(filmId); // Проверяем, существует ли фильм
+        if (film == null) {
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId));
+        }
+
+        // Проверяем, существует ли пользователь
+        User user = userStorage.findById(userId);
+        if (user == null) {
+            throw new NotFoundException(String.format("not found", userId));
+        }
+
+        // Проверяем, был ли лайк от данного пользователя
         if (!film.getLikedUsers().contains(userId)) {
             throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId));
         }
+
+        // Удаляем лайк
         film.getLikedUsers().remove(userId);
         log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
-        return film; // Возвращаем фильм с обновленным списком лайков
     }
 
     @Override
@@ -82,7 +114,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         return films.values().stream()
                 .sorted(Comparator.comparingInt(f -> -f.getLikedUsers().size()))
                 .limit(count)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private long getNextId() {

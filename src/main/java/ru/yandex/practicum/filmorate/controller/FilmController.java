@@ -1,13 +1,16 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
@@ -45,10 +48,20 @@ public class FilmController {
     }
 
     //добавление лайка к фильму
+//    @PutMapping("/{id}/like/{userId}")
+//    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
+//        filmService.addLike(id, userId);
+//        return ResponseEntity.ok().build();
+//    }
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.addLike(id, userId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> addLike(@PathVariable Long id, @PathVariable Long userId) {
+        try {
+            filmService.addLike(id, userId);
+            return ResponseEntity.ok().build(); // Возвращаем 200 OK, если лайк добавлен
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage())); // Возвращаем 404 и JSON с ошибкой
+        }
     }
 
 

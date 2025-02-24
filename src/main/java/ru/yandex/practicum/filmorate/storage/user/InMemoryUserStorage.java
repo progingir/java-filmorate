@@ -108,21 +108,6 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
-//    @Override
-//    public Collection<User> getFriends(Long userId) throws NotFoundException {
-//        User user = findById(userId);
-//
-//        // Защита от null
-//        if (user.getFriends() == null || user.getFriends().isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//
-//        // Возвращаем список друзей
-//        return user.getFriends().stream()
-//                .map(this::findById) // Преобразуем ID друзей в объекты User
-//                .collect(Collectors.toList());
-//    }
-
     @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
