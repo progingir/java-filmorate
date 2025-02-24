@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -10,6 +11,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -28,8 +30,11 @@ public class FilmControllerTest {
 
     @BeforeAll
     public static void start() throws ValidationException {
-        // Создаем экземпляр хранилища фильмов
-        FilmStorage filmStorage = new InMemoryFilmStorage();
+        // Создаем мок для UserStorage
+        UserStorage userStorage = Mockito.mock(UserStorage.class);
+
+        // Создаем экземпляр хранилища фильмов, передавая мок UserStorage
+        FilmStorage filmStorage = new InMemoryFilmStorage(userStorage);
 
         // Создаем экземпляр сервиса, передавая ему хранилище
         FilmService filmService = new FilmService(filmStorage);
@@ -37,7 +42,7 @@ public class FilmControllerTest {
         // Создаем контроллер, передавая ему сервис
         filmController = new FilmController(filmService);
 
-
+        // Инициализация тестовых данных
         validFilm = new Film();
         validFilm.setId(0L);
         validFilm.setName("Фильм");
