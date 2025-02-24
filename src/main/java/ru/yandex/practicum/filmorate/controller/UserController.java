@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/users")
@@ -58,11 +59,16 @@ public class UserController {
 
     @GetMapping("/{id}/friends")
     public Collection<User> getFriends(@PathVariable Long id) throws NotFoundException {
-        return userService.getFriends(id);
+        Collection<User> friends = userService.getFriends(id);
+        // Убедимся, что возвращаемое значение не null
+        return friends != null ? friends : Collections.emptyList();
     }
+
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) throws NotFoundException {
         return userService.getCommonFriends(id, otherId);
     }
 }
+//В вашем контроллере метод getFriends вызывает userService.getFriends(id), и если это значение null, это вызовет попытку выполнить метод stream на null, что и приведет к NullPointerException.
+//   • Корректные возвращаемые значения из сервисного слоя (в данном случае, как указано выше) должны защищать от этого сценария.

@@ -90,10 +90,12 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
-        return user.getFriends().stream()
+        // Возвращаем пустой список, если у пользователя нет друзей
+        return user.getFriends().isEmpty() ? Collections.emptyList() : user.getFriends().stream()
                 .map(users::get)
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {
