@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ExceptionMessages;
@@ -27,19 +26,17 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film findById(Long id) throws NotFoundException {
         if (id == null) {
-            log.error(ExceptionMessages.FILM_ID_CANNOT_BE_NULL);
             throw new ValidationException(ExceptionMessages.FILM_ID_CANNOT_BE_NULL);
         }
         Film film = films.get(id);
         if (film == null) {
-            log.error(String.format(ExceptionMessages.FILM_NOT_FOUND, id));
             throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, id));
         }
         return film;
     }
 
     @Override
-    public Film create(@Valid Film film) {
+    public Film create(Film film) throws ValidationException {
         validateFilm(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -47,41 +44,39 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film update(@Valid Film newFilm) throws NotFoundException {
-        validateFilm(newFilm);
-        Film oldFilm = films.get(newFilm.getId());
+    public Film update(Film film) throws NotFoundException, ValidationException {
+        validateFilm(film);
+        Film oldFilm = films.get(film.getId());
         if (oldFilm == null) {
-            log.error(String.format(ExceptionMessages.FILM_NOT_FOUND, newFilm.getId()));
-            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, newFilm.getId()));
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, film.getId()));
         }
-        oldFilm.setName(newFilm.getName());
-        oldFilm.setDescription(newFilm.getDescription());
-        oldFilm.setReleaseDate(newFilm.getReleaseDate());
-        oldFilm.setDuration(newFilm.getDuration());
+        oldFilm.setName(film.getName());
+        oldFilm.setDescription(film.getDescription());
+        oldFilm.setReleaseDate(film.getReleaseDate());
+        oldFilm.setDuration(film.getDuration());
         return oldFilm;
     }
 
+    @Override
     public void addLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
         film.getLikedUsers().add(userId);
-        log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
     }
 
     @Override
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
         Film film = findById(filmId);
         if (!film.getLikedUsers().contains(userId)) {
-            log.error("User with ID = {} did not like the film with ID = {}", userId, filmId);
             throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId));
         }
         film.getLikedUsers().remove(userId);
-        log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
     }
 
+    @Override
     public List<Film> getTopFilms(int count) {
         log.info("Getting top-{} films by number of likes", count);
         return films.values().stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikedUsers().size(), f1.getLikedUsers().size()))
+                .sorted(Comparator.comparingInt(f -> -f.getLikedUsers().size()))
                 .limit(count)
                 .toList();
     }
@@ -92,19 +87,15 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private void validateFilm(Film film) throws ValidationException {
         if (film.getName() == null || film.getName().isBlank()) {
-            log.error(ExceptionMessages.FILM_NAME_CANNOT_BE_EMPTY);
             throw new ValidationException(ExceptionMessages.FILM_NAME_CANNOT_BE_EMPTY);
         }
         if (film.getDescription() != null && film.getDescription().length() > 200) {
-            log.error(ExceptionMessages.FILM_DESCRIPTION_TOO_LONG);
             throw new ValidationException(ExceptionMessages.FILM_DESCRIPTION_TOO_LONG);
         }
         if (film.getReleaseDate().isBefore(ChronoLocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0, 0)))) {
-            log.error(ExceptionMessages.FILM_RELEASE_DATE_INVALID);
             throw new ValidationException(ExceptionMessages.FILM_RELEASE_DATE_INVALID);
         }
         if (film.getDuration() <= 0) {
-            log.error(ExceptionMessages.FILM_DURATION_INVALID);
             throw new ValidationException(ExceptionMessages.FILM_DURATION_INVALID);
         }
     }

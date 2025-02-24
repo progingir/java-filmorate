@@ -34,7 +34,8 @@ public class InMemoryUserStorage implements UserStorage {
         duplicateCheck(user);
         user.setId(getNextId());
         users.put(user.getId(), user);
-        return user;
+        log.info("User  created: {}", user);
+        return user; // Возвращаем созданный объект пользователя
     }
 
     @Override
@@ -63,10 +64,11 @@ public class InMemoryUserStorage implements UserStorage {
         }
         User user = users.get(id);
         if (user == null) {
-            log.error("User with ID = {} not found", id);
-            throw new NotFoundException("User with ID = " + id + " not found");
+            log.error("User  with ID = {} not found", id);
+            throw new NotFoundException("User  with ID = " + id + " not found");
         }
-        return user;
+        log.info("User  found: {}", user);
+        return user; // Возвращаем объект пользователя
     }
 
     @Override

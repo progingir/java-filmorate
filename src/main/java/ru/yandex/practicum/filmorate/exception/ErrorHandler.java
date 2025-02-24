@@ -36,7 +36,7 @@ public class ErrorHandler {
                 .body(Map.of("error", "Internal server error: " + e.getMessage()));
     }
 
-    // Новый обработчик для MethodArgumentNotValidException
+    // Обработка MethodArgumentNotValidException для валидации данных
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
