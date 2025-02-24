@@ -46,21 +46,12 @@ public class FilmController {
     }
 
     //добавление лайка к фильму
-//    @PutMapping("/{id}/like/{userId}")
-//    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
-//        filmService.addLike(id, userId);
-//        return ResponseEntity.ok().build();
-//    }
-
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        try {
-            filmService.addLike(id, userId);
-            return ResponseEntity.ok().build(); // Всегда возвращаем 200 OK
-        } catch (NotFoundException e) {
-            return ResponseEntity.ok().build(); // Все равно возвращаем 200 OK
-        }
+        filmService.addLike(id, userId);
+        return ResponseEntity.ok().build();
     }
+
 
     //удаление лайка из фильма
     @DeleteMapping("/{id}/like/{userId}")

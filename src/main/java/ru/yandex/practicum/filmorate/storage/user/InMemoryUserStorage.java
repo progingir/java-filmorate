@@ -67,11 +67,32 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
+//    @Override
+//    public User addFriend(Long userId, Long friendId) throws NotFoundException {
+//        User user = findById(userId);
+//        User friend = findById(friendId);
+//
+//        if (user.getFriends() == null) {
+//            user.setFriends(new HashSet<>());
+//        }
+//        if (friend.getFriends() == null) {
+//            friend.setFriends(new HashSet<>());
+//        }
+//
+//        user.getFriends().add(friendId);
+//        friend.getFriends().add(userId);
+//
+//        log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
+//        return user;
+//    }
+
     @Override
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
+        // Находим пользователя и его друга
         User user = findById(userId);
         User friend = findById(friendId);
 
+        // Инициализируем списки друзей, если они null
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -79,10 +100,10 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
+        // Добавляем друга в список друзей пользователя
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
-        log.info("User with ID = {} has been added as a friend to user with ID = {}", friendId, userId);
         return user;
     }
 
@@ -106,15 +127,17 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Collection<User> getFriends(Long id) throws NotFoundException {
-        User user = findById(id);
+    public Collection<User> getFriends(Long userId) throws NotFoundException {
+        User user = findById(userId);
 
+        // Защита от null
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
             return Collections.emptyList();
         }
 
+        // Возвращаем список друзей
         return user.getFriends().stream()
-                .map(users::get)
+                .map(this::findById) // Преобразуем ID друзей в объекты User
                 .collect(Collectors.toList());
     }
 
