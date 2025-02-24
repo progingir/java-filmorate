@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 public class InMemoryFilmStorage implements FilmStorage {
 
     private static final Map<Long, Film> films = new HashMap<>();
-    private final UserStorage userStorage; // Добавляем UserStorage
+    private final UserStorage userStorage;
 
     @Autowired
     public InMemoryFilmStorage(UserStorage userStorage) {
-        this.userStorage = userStorage; // Инициализируем UserStorage через конструктор
+        this.userStorage = userStorage;
     }
 
     @Override
@@ -74,36 +74,31 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId));
         }
 
-        // Проверяем, существует ли пользователь
         User user = userStorage.findById(userId);
         if (user == null) {
             throw new NotFoundException(String.format("not found", userId));
         }
 
-        // Добавляем лайк
         film.getLikedUsers().add(userId);
         log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
     }
 
     @Override
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
-        Film film = findById(filmId); // Проверяем, существует ли фильм
+        Film film = findById(filmId);
         if (film == null) {
             throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId));
         }
 
-        // Проверяем, существует ли пользователь
         User user = userStorage.findById(userId);
         if (user == null) {
             throw new NotFoundException(String.format("not found", userId));
         }
 
-        // Проверяем, был ли лайк от данного пользователя
         if (!film.getLikedUsers().contains(userId)) {
             throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId));
         }
 
-        // Удаляем лайк
         film.getLikedUsers().remove(userId);
         log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
     }

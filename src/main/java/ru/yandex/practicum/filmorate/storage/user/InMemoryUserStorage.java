@@ -69,11 +69,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User addFriend(Long userId, Long friendId) throws NotFoundException {
-        // Находим пользователя и его друга
         User user = findById(userId);
         User friend = findById(friendId);
 
-        // Инициализируем списки друзей, если они null
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -81,7 +79,6 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
-        // Добавляем друга в список друзей пользователя
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
@@ -112,7 +109,6 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
 
-        // Возвращаем список друзей как объекты User
         return user.getFriends().stream()
                 .map(friendId -> {
                     try {
@@ -122,7 +118,7 @@ public class InMemoryUserStorage implements UserStorage {
                         return null;
                     }
                 })
-                .filter(Objects::nonNull) // Фильтруем null, если друг не найден
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -131,11 +127,9 @@ public class InMemoryUserStorage implements UserStorage {
         User user = findById(userId);
         User otherUser = findById(otherUserId);
 
-        // Находим общих друзей
         Set<Long> commonFriendIds = new HashSet<>(user.getFriends());
         commonFriendIds.retainAll(otherUser.getFriends());
 
-        // Возвращаем общих друзей как объекты User
         return commonFriendIds.stream()
                 .map(friendId -> {
                     try {
@@ -145,7 +139,7 @@ public class InMemoryUserStorage implements UserStorage {
                         return null;
                     }
                 })
-                .filter(Objects::nonNull) // Фильтруем null, если друг не найден
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

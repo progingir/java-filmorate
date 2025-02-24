@@ -66,5 +66,3 @@ public class UserController {
         return userService.getCommonFriends(id, otherId);
     }
 }
-//В вашем контроллере метод getFriends вызывает userService.getFriends(id), и если это значение null, это вызовет попытку выполнить метод stream на null, что и приведет к NullPointerException.
-//   • Корректные возвращаемые значения из сервисного слоя (в данном случае, как указано выше) должны защищать от этого сценария.
