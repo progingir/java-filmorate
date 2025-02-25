@@ -39,35 +39,35 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User update(User newUser ) throws NotFoundException, ValidationException {
-        if (newUser .getId() == null) {
+    public User update(User newUser) throws NotFoundException, ValidationException {
+        if (newUser.getId() == null) {
             throw new ValidationException("User  ID cannot be null");
         }
-        if (!users.containsKey(newUser .getId())) {
-            throw new NotFoundException("User  with ID = " + newUser .getId() + " not found");
+        if (!users.containsKey(newUser.getId())) {
+            throw new NotFoundException("User  with ID = " + newUser.getId() + " not found");
         }
 
         // Находим старого пользователя
-        User oldUser  = users.get(newUser .getId());
+        User oldUser = users.get(newUser.getId());
 
         // Обновляем поля
-        oldUser .setEmail(newUser .getEmail());
-        oldUser .setLogin(newUser .getLogin());
-        oldUser .setName(newUser .getName() != null ? newUser .getName() : newUser .getLogin());
-        oldUser .setBirthday(newUser .getBirthday());
+        oldUser.setEmail(newUser.getEmail());
+        oldUser.setLogin(newUser.getLogin());
+        oldUser.setName(newUser.getName() != null ? newUser.getName() : newUser.getLogin());
+        oldUser.setBirthday(newUser.getBirthday());
 
         // Обновляем список друзей, если он не null
-        if (newUser .getFriends() != null) {
-            oldUser .setFriends(new HashSet<>(newUser .getFriends()));
+        if (newUser.getFriends() != null) {
+            oldUser.setFriends(new HashSet<>(newUser.getFriends()));
         } else {
             // Если новый пользователь не содержит список друзей, оставляем старый
-            oldUser .setFriends(oldUser .getFriends() != null ? new HashSet<>(oldUser .getFriends()) : new HashSet<>());
+            oldUser.setFriends(oldUser.getFriends() != null ? new HashSet<>(oldUser.getFriends()) : new HashSet<>());
         }
 
         // Сохраняем изменения
-        users.put(oldUser .getId(), oldUser );
+        users.put(oldUser.getId(), oldUser);
 
-        log.info("User  with ID = {} updated: {}", oldUser .getId(), oldUser );
+        log.info("User  with ID = {} updated: {}", oldUser.getId(), oldUser);
         return oldUser;
     }
 
