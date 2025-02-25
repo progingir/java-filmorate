@@ -95,6 +95,6 @@ public class UserControllerTest {
             userController.update(userWithWrongId);
         });
         assertNotNull(exception);
-        assertEquals("User  with ID = 999 not found", exception.getMessage());
+        assertEquals("User with ID = 999 not found", exception.getMessage());
     }
 }

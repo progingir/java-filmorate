@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
-
     private final Map<Long, User> users = new HashMap<>();
 
     @Override
@@ -33,6 +32,7 @@ public class InMemoryUserStorage implements UserStorage {
         validateBirthday(user.getBirthday());
         duplicateCheck(user);
         user.setId(getNextId());
+        user.setFriends(new HashSet<>()); // Ensure friends list is initialized
         users.put(user.getId(), user);
         log.info("User created: {}", user);
         return user;
@@ -44,29 +44,21 @@ public class InMemoryUserStorage implements UserStorage {
             throw new ValidationException("User ID cannot be null");
         }
         if (!users.containsKey(newUser.getId())) {
-            throw new NotFoundException("User  with ID = " + newUser.getId() + " not found");
+            throw new NotFoundException("User with ID = " + newUser.getId() + " not found");
         }
-
-        // Находим старого пользователя
         User oldUser = users.get(newUser.getId());
-
-        // Обновляем поля
         oldUser.setEmail(newUser.getEmail());
         oldUser.setLogin(newUser.getLogin());
         oldUser.setName(newUser.getName() != null ? newUser.getName() : newUser.getLogin());
         oldUser.setBirthday(newUser.getBirthday());
 
-        // Обновляем список друзей, если он не null
-        if (newUser.getFriends() != null) {
-            oldUser.setFriends(new HashSet<>(newUser.getFriends()));
-        } else {
-            // Если новый пользователь не содержит список друзей, оставляем старый
-            oldUser.setFriends(oldUser.getFriends() != null ? new HashSet<>(oldUser.getFriends()) : new HashSet<>());
+        // Initialize friends list if null
+        if (newUser.getFriends() == null) {
+            newUser.setFriends(new HashSet<>());
         }
+        oldUser.setFriends(new HashSet<>(newUser.getFriends()));
 
-        // Сохраняем изменения
         users.put(oldUser.getId(), oldUser);
-
         log.info("User with ID = {} updated: {}", oldUser.getId(), oldUser);
         return oldUser;
     }
@@ -89,7 +81,7 @@ public class InMemoryUserStorage implements UserStorage {
         User user = findById(userId);
         User friend = findById(friendId);
 
-        // Инициализируем списки друзей, если они null
+        // Ensure friends lists are initialized
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -97,11 +89,11 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
-        // Добавляем друга в обе стороны
+        // Add friends in both directions
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
-        // Сохраняем изменения через метод update
+        // Save changes
         update(user);
         update(friend);
 
@@ -113,6 +105,7 @@ public class InMemoryUserStorage implements UserStorage {
         User user = findById(userId);
         User friend = findById(friendId);
 
+        // Ensure friends lists are initialized
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -120,6 +113,7 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
+        // Remove friends in both directions
         user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
 
@@ -129,14 +123,13 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
-        User user = findById(id); // Находим пользователя
+        User user = findById(id);
 
-        // Если у пользователя нет друзей, возвращаем пустой список
+        // Return empty list if no friends exist
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
             return Collections.emptyList();
         }
 
-        // Возвращаем список друзей как объекты User
         return user.getFriends().stream()
                 .map(this::findById)
                 .collect(Collectors.toList());
@@ -146,6 +139,14 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {
         User user = findById(userId);
         User otherUser = findById(otherUserId);
+
+        // Ensure friends lists are initialized
+        if (user.getFriends() == null) {
+            user.setFriends(new HashSet<>());
+        }
+        if (otherUser.getFriends() == null) {
+            otherUser.setFriends(new HashSet<>());
+        }
 
         Set<Long> commonFriendIds = new HashSet<>(user.getFriends());
         commonFriendIds.retainAll(otherUser.getFriends());
