@@ -41,7 +41,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(User newUser) throws NotFoundException, ValidationException {
         if (newUser.getId() == null) {
-            throw new ValidationException("User  ID cannot be null");
+            throw new ValidationException("User ID cannot be null");
         }
         if (!users.containsKey(newUser.getId())) {
             throw new NotFoundException("User  with ID = " + newUser.getId() + " not found");
@@ -67,7 +67,7 @@ public class InMemoryUserStorage implements UserStorage {
         // Сохраняем изменения
         users.put(oldUser.getId(), oldUser);
 
-        log.info("User  with ID = {} updated: {}", oldUser.getId(), oldUser);
+        log.info("User with ID = {} updated: {}", oldUser.getId(), oldUser);
         return oldUser;
     }
 
