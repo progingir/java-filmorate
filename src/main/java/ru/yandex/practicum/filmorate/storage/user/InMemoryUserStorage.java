@@ -32,7 +32,7 @@ public class InMemoryUserStorage implements UserStorage {
         validateBirthday(user.getBirthday());
         duplicateCheck(user);
         user.setId(getNextId());
-        user.setFriends(new HashSet<>()); // Ensure friends list is initialized
+        user.setFriends(new HashSet<>());
         users.put(user.getId(), user);
         log.info("User created: {}", user);
         return user;
@@ -52,7 +52,6 @@ public class InMemoryUserStorage implements UserStorage {
         oldUser.setName(newUser.getName() != null ? newUser.getName() : newUser.getLogin());
         oldUser.setBirthday(newUser.getBirthday());
 
-        // Initialize friends list if null
         if (newUser.getFriends() == null) {
             newUser.setFriends(new HashSet<>());
         }
@@ -81,7 +80,6 @@ public class InMemoryUserStorage implements UserStorage {
         User user = findById(userId);
         User friend = findById(friendId);
 
-        // Ensure friends lists are initialized
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -89,11 +87,9 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
-        // Add friends in both directions
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
-        // Save changes
         update(user);
         update(friend);
 
@@ -105,7 +101,6 @@ public class InMemoryUserStorage implements UserStorage {
         User user = findById(userId);
         User friend = findById(friendId);
 
-        // Ensure friends lists are initialized
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
@@ -113,7 +108,6 @@ public class InMemoryUserStorage implements UserStorage {
             friend.setFriends(new HashSet<>());
         }
 
-        // Remove friends in both directions
         user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
 
@@ -125,7 +119,6 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getFriends(Long id) throws NotFoundException {
         User user = findById(id);
 
-        // Return empty list if no friends exist
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
             return Collections.emptyList();
         }
@@ -140,7 +133,6 @@ public class InMemoryUserStorage implements UserStorage {
         User user = findById(userId);
         User otherUser = findById(otherUserId);
 
-        // Ensure friends lists are initialized
         if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
         }
