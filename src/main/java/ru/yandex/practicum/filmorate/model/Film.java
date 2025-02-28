@@ -30,6 +30,6 @@ public class Film {
     private Integer duration;
     @JsonIgnore
     private Set<Long> likedUsers;
-    private Long mpa;
+    private Long mpaId;
     private LinkedHashSet<Long> genres;
 }
