@@ -1,23 +1,20 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jdk.jfr.Description;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 import java.util.*;
 
 @Data
 @Builder
-@EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor(staticName = "of")
-public class Film {
+public class Buffer {
     private Long id;
     @NotNull
     @NotBlank
@@ -28,8 +25,17 @@ public class Film {
     private LocalDate releaseDate;
     @NotNull
     private Integer duration;
-    @JsonIgnore
-    private Set<Long> likedUsers;
+    private List<String> genres;
     private Long mpa;
-    private LinkedHashSet<Long> genres;
+
+    public Map<String, Object> toMapBuffer() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("id", id);
+        values.put("name", name);
+        values.put("description", description);
+        values.put("releaseDate", releaseDate);
+        values.put("duration", duration);
+        values.put("ratingId", mpa);
+        return values;
+    }
 }

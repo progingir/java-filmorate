@@ -17,7 +17,7 @@ import java.util.*;
 @Builder
 @EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor(staticName = "of")
-public class Film {
+public class FilmRequest {
     private Long id;
     @NotNull
     @NotBlank
@@ -30,6 +30,6 @@ public class Film {
     private Integer duration;
     @JsonIgnore
     private Set<Long> likedUsers;
-    private Long mpa;
-    private LinkedHashSet<Long> genres;
+    private Mpa mpa;
+    private LinkedHashSet<Genre> genres;
 }
