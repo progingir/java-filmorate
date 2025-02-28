@@ -94,7 +94,6 @@ public class FilmService implements FilmInterface {
         return FilmRequest.of(film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), new HashSet<>(), film.getMpa(), genres);
     }
 
-    @Override
     public List<Film> viewRaiting(Long count) {
         return List.of();
     }

@@ -24,8 +24,9 @@ import java.util.Set;
 public class UserService implements UserInterface {
     @Autowired
     @Qualifier("UserDbStorage")
-    private final UserStorage userStorage;
+    UserStorage userStorage;
     private final JdbcTemplate jdbcTemplate;
+
 
     @Override
     public User addFriend(Long idUser, Long idFriend) throws ConditionsNotMetException {
@@ -34,16 +35,17 @@ public class UserService implements UserInterface {
         Map<Long, Set<Long>> friends = jdbcTemplate.query(sqlQuery2, new UserDbStorage.FriendsExtractor());
 
         if (friends.get(idUser) != null && friends.get(idUser).contains(idFriend)) {
-            log.error("Exception", new ConditionsNotMetException("Пользователь с ID " + idFriend + " уже добавлен в друзья"));
-            throw new ConditionsNotMetException("Пользователь с ID " + idFriend + " уже добавлен в друзья");
+            log.error("Exception", new ConditionsNotMetException(idFriend.toString()));
+            throw new ConditionsNotMetException(idFriend.toString());
         }
         if (userStorage.findById(idFriend) == null) {
-            log.error("Exception", new NotFoundException("Пользователь с ID " + idFriend + " отсутствует в базе", "Список фильмов с рейтингом пуст."));
-            throw new NotFoundException("Пользователь с ID " + idFriend + " отсутствует в базе", "Список фильмов с рейтингом пуст.");
+            log.error("Exception", new NotFoundException(idFriend.toString(), "Пользователь с данным идентификатором отсутствует в базе"));
+            throw new NotFoundException(idFriend.toString(), "Пользователь с данным идентификатором отсутствует в базе");
         }
-        String sqlQuery = "insert into friends(userId, friendId) values (?, ?)";
+        String sqlQuery = "insert into friends(userId, friendId) " + "values (?, ?)";
         jdbcTemplate.update(sqlQuery, idUser, idFriend);
         return userStorage.findById(idUser);
+
     }
 
     @Override
@@ -51,14 +53,13 @@ public class UserService implements UserInterface {
         log.info("Обработка Del-запроса...");
         String sqlQuery = "delete from friends where userId = ? and friendId = ?";
         jdbcTemplate.update(sqlQuery, idUser, idFriend);
-
         if (userStorage.findById(idUser) == null) {
-            log.error("Exception", new NotFoundException("Пользователь с ID " + idUser + " отсутствует в базе", "Список фильмов с рейтингом пуст."));
-            throw new NotFoundException("Пользователь с ID " + idUser + " отсутствует в базе", "Список фильмов с рейтингом пуст.");
+            log.error("Exception", new NotFoundException(idUser.toString(), "Пользователь с данным идентификатором отсутствует в базе"));
+            throw new NotFoundException(idUser.toString(), "Пользователь с данным идентификатором отсутствует в базе");
         }
         if (userStorage.findById(idFriend) == null) {
-            log.error("Exception", new NotFoundException("Пользователь с ID " + idFriend + " отсутствует в базе", "Список фильмов с рейтингом пуст."));
-            throw new NotFoundException("Пользователь с ID " + idFriend + " отсутствует в базе", "Список фильмов с рейтингом пуст.");
+            log.error("Exception", new NotFoundException(idUser.toString(), "Пользователь с данным идентификатором отсутствует в базе"));
+            throw new NotFoundException(idUser.toString(), "Пользователь с данным идентификатором отсутствует в базе");
         }
         return userStorage.findById(idUser);
     }
@@ -70,11 +71,9 @@ public class UserService implements UserInterface {
         Map<Long, Set<Long>> friends = jdbcTemplate.query(sqlQuery2, new UserDbStorage.FriendsExtractor());
         Set<Long> result = new HashSet<>(friends.get(idUser));
         result.retainAll(friends.get(idFriend));
-
         Set<User> set = new HashSet<>();
-        for (Long f : result) {
+        for (Long f : result)
             set.add(userStorage.findById(f));
-        }
         return set;
     }
 
@@ -83,19 +82,15 @@ public class UserService implements UserInterface {
         log.info("Обработка Get-запроса...");
         String sqlQuery2 = "select userId, friendId from friends";
         Map<Long, Set<Long>> friends = jdbcTemplate.query(sqlQuery2, new UserDbStorage.FriendsExtractor());
-
         if (userStorage.findById(idUser) == null) {
-            log.error("Exception", new NotFoundException("Пользователь с ID " + idUser + " отсутствует в базе", "Список фильмов с рейтингом пуст."));
-            throw new NotFoundException("Пользователь с ID " + idUser + " отсутствует в базе", "Список фильмов с рейтингом пуст.");
+            log.error("Exception", new NotFoundException(idUser.toString(), "Пользователь с данным идентификатором отсутствует в базе"));
+            throw new NotFoundException(idUser.toString(), "Пользователь с данным идентификатором отсутствует в базе");
         }
-
-        if (friends.get(idUser) == null) {
-            return new HashSet<>();
-        } else {
+        if (friends.get(idUser) == null) return new HashSet<>();
+        else {
             Set<User> set = new HashSet<>();
-            for (Long f : friends.get(idUser)) {
+            for (Long f : friends.get(idUser))
                 set.add(userStorage.findById(f));
-            }
             return set;
         }
     }

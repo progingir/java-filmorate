@@ -1,15 +1,14 @@
 package ru.yandex.practicum.filmorate.exception;
 
 public class ConditionsNotMetException extends RuntimeException {
-    private String parameter;
-    private String reason;
 
-    public ConditionsNotMetException(String parameter) {
-        this.parameter = parameter;
-        this.reason = reason;
+    private final String id; // Идентификатор, связанный с ошибкой
+
+    public ConditionsNotMetException(String id) {
+        this.id = id;
     }
 
-    public Throwable fillInStackTrace() {
-        return null;
+    public String getId() {
+        return id;
     }
 }

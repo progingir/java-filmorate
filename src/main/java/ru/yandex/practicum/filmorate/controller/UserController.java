@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -18,7 +19,8 @@ import java.util.Set;
 @RequestMapping("/users")
 
 public class UserController {
-
+    @Autowired
+    @Qualifier("UserDbStorage")
     private final UserStorage userStorage;
     private final UserInterface userInterface;
 
@@ -50,22 +52,22 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public User addFriend(@Valid @RequestBody @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public User addFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
         return userInterface.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public User delFriend(@Valid @RequestBody @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public User delFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
         return userInterface.delFriend(id, friendId);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Set<User> findJointFriends(@Valid @RequestBody @PathVariable("id") Long id, @PathVariable("otherId") Long otherId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public Set<User> findJointFriends(@Valid @PathVariable("id") Long id, @PathVariable("otherId") Long otherId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
         return userInterface.findJointFriends(id, otherId);
     }
 
     @GetMapping("/{id}/friends")
-    public Set<User> findJointFriends(@Valid @RequestBody @PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public Set<User> findJointFriends(@Valid @PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
         return userInterface.findAllFriends(id);
     }
 }
