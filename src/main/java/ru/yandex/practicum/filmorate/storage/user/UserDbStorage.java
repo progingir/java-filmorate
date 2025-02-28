@@ -29,9 +29,9 @@ public class UserDbStorage implements UserStorage {
     private static final String FIND_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
     private static final String INSERT_USER = "INSERT INTO users (email, login, name, birthday) VALUES (?, ?, ?, ?)";
     private static final String UPDATE_USER = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-    private static final String ADD_FRIEND = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
-    private static final String REMOVE_FRIEND = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
-    private static final String GET_FRIENDS = "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
+    private static final String ADD_FRIEND = "INSERT INTO friends (userId, friendId) VALUES (?, ?)";
+    private static final String REMOVE_FRIEND = "DELETE FROM friends WHERE userId = ? AND friendId = ?";
+    private static final String GET_FRIENDS = "SELECT u.* FROM users u JOIN friends f ON u.id = f.friendId WHERE f.userId = ?";
     private static final String CHECK_DUPLICATE_EMAIL = "SELECT COUNT(*) FROM users WHERE email = ?";
 
     // Метод для отображения строки из результата запроса в объект User
