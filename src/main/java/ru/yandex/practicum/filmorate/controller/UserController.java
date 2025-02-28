@@ -4,65 +4,68 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.UserInterface;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/users")
+
 public class UserController {
 
-    private final UserService userService;
+    private final UserStorage userStorage;
+    private final UserInterface userInterface;
 
     @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
+    public UserController(UserStorage userStorage, UserInterface userInterface) {
+        this.userStorage = userStorage;
+        this.userInterface = userInterface;
     }
 
     @GetMapping
     public Collection<User> findAll() {
-        return userService.findAll();
+        return userStorage.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public User findById(@PathVariable("id") Long id) throws ConditionsNotMetException {
+        return userStorage.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User create(@Valid @RequestBody User user) throws ValidationException, DuplicatedDataException {
-        return userService.create(user);
+    public User create(@Valid @RequestBody User user) throws ConditionsNotMetException, DuplicatedDataException {
+        return userStorage.create(user);
     }
 
     @PutMapping
-    public User update(@Valid @RequestBody User user) throws NotFoundException, ValidationException {
-        return userService.update(user);
-    }
-
-    @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) throws NotFoundException, ValidationException {
-        return userService.findById(id);
+    public User update(@Valid @RequestBody User newUser) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+        return userStorage.update(newUser);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) throws NotFoundException {
-        userService.addFriend(id, friendId);
+    public User addFriend(@Valid @RequestBody @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+        return userInterface.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) throws NotFoundException {
-        userService.removeFriend(id, friendId);
-    }
-
-    @GetMapping("/{id}/friends")
-    public Collection<User> getFriends(@PathVariable Long id) throws NotFoundException {
-        return userService.getFriends(id);
+    public User delFriend(@Valid @RequestBody @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+        return userInterface.delFriend(id, friendId);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) throws NotFoundException {
-        return userService.getCommonFriends(id, otherId);
+    public Set<User> findJointFriends(@Valid @RequestBody @PathVariable("id") Long id, @PathVariable("otherId") Long otherId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+        return userInterface.findJointFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public Set<User> findJointFriends(@Valid @RequestBody @PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+        return userInterface.findAllFriends(id);
     }
 }

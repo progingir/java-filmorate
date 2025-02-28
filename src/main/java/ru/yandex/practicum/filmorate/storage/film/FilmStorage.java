@@ -15,10 +15,4 @@ public interface FilmStorage {
     Film create(Film film);
 
     Film update(Film film) throws NotFoundException;
-
-    void addLike(Long filmId, Long userId) throws NotFoundException;
-
-    void removeLike(Long filmId, Long userId) throws NotFoundException;
-
-    List<Film> getTopFilms(int count);
 }

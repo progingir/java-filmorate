@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,8 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -57,7 +60,7 @@ public class FilmDbStorage implements FilmStorage {
         try {
             return jdbcTemplate.queryForObject(FIND_FILM_BY_ID, FILM_ROW_MAPPER, id);
         } catch (DataAccessException e) {
-            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, id));
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, id), "Список фильмов с рейтингом пуст.");
         }
     }
 
@@ -86,7 +89,7 @@ public class FilmDbStorage implements FilmStorage {
         validateFilm(film);
 
         if (!existsById(film.getId())) {
-            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, film.getId()));
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, film.getId()), "Список фильмов с рейтингом пуст.");
         }
 
         int rowsAffected = jdbcTemplate.update(UPDATE_FILM,
@@ -97,7 +100,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getId());
 
         if (rowsAffected == 0) {
-            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, film.getId()));
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, film.getId()), "Список фильмов с рейтингом пуст.");
         }
 
         log.info("Film with ID = {} updated: {}", film.getId(), film);
@@ -107,10 +110,10 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void addLike(Long filmId, Long userId) throws NotFoundException {
         if (!existsById(filmId)) {
-            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId));
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId), "Список фильмов с рейтингом пуст.");
         }
         if (userStorage.findById(userId) == null) {
-            throw new NotFoundException(String.format("User with ID = %d not found", userId));
+            throw new NotFoundException(String.format("User with ID = %d not found", userId), "Список фильмов с рейтингом пуст.");
         }
 
         jdbcTemplate.update(ADD_LIKE, filmId, userId);
@@ -120,15 +123,15 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
         if (!existsById(filmId)) {
-            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId));
+            throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId), "Список фильмов с рейтингом пуст.");
         }
         if (userStorage.findById(userId) == null) {
-            throw new NotFoundException(String.format("User with ID = %d not found", userId));
+            throw new NotFoundException(String.format("User with ID = %d not found", userId), "Список фильмов с рейтингом пуст.");
         }
 
         int rowsAffected = jdbcTemplate.update(REMOVE_LIKE, filmId, userId);
         if (rowsAffected == 0) {
-            throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId));
+            throw new NotFoundException(String.format("User with ID = %d did not like the film with ID = %d", userId, filmId), "Список фильмов с рейтингом пуст.");
         }
 
         log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
@@ -156,6 +159,34 @@ public class FilmDbStorage implements FilmStorage {
         }
         if (film.getDuration() <= 0) {
             throw new ValidationException(ExceptionMessages.FILM_DURATION_INVALID);
+        }
+    }
+
+    public static class LikedUsersExtractor implements ResultSetExtractor<Map<Long, Set<Long>>> {
+        @Override
+        public Map<Long, Set<Long>> extractData(ResultSet rs) throws SQLException {
+            Map<Long, Set<Long>> likedUsers = new HashMap<>();
+            while (rs.next()) {
+                Long filmId = rs.getLong("filmId");
+                Long userId = rs.getLong("userId");
+
+                likedUsers.computeIfAbsent(filmId, k -> new HashSet<>()).add(userId);
+            }
+            return likedUsers;
+        }
+    }
+
+    public static class FilmGenreExtractor implements ResultSetExtractor<Map<Long, LinkedHashSet<Long>>> {
+        @Override
+        public Map<Long, LinkedHashSet<Long>> extractData(ResultSet rs) throws SQLException {
+            Map<Long, LinkedHashSet<Long>> filmGenre = new HashMap<>();
+            while (rs.next()) {
+                Long filmId = rs.getLong("filmId");
+                Long genreId = rs.getLong("genreId");
+
+                filmGenre.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(genreId);
+            }
+            return filmGenre;
         }
     }
 }

@@ -2,8 +2,10 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
@@ -12,7 +14,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Qualifier("UserDbStorage")
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
@@ -87,7 +91,7 @@ public class UserDbStorage implements UserStorage {
             throw new ValidationException("User ID cannot be null");
         }
         if (!existsById(newUser.getId())) {
-            throw new NotFoundException("User with ID = " + newUser.getId() + " not found");
+            throw new NotFoundException("User with ID = " + newUser.getId() + " not found", "Список фильмов с рейтингом пуст.");
         }
 
         validateEmail(newUser.getEmail());
@@ -103,7 +107,7 @@ public class UserDbStorage implements UserStorage {
                 newUser.getId());
 
         if (rowsAffected == 0) {
-            throw new NotFoundException("User with ID = " + newUser.getId() + " not found");
+            throw new NotFoundException("User with ID = " + newUser.getId() + " not found", "Список фильмов с рейтингом пуст.");
         }
 
         log.info("User with ID = {} updated: {}", newUser.getId(), newUser);
@@ -118,17 +122,17 @@ public class UserDbStorage implements UserStorage {
         try {
             return jdbcTemplate.queryForObject(FIND_USER_BY_ID, USER_ROW_MAPPER, id);
         } catch (DataAccessException e) {
-            throw new NotFoundException("User with ID = " + id + " not found");
+            throw new NotFoundException("User with ID = " + id + " not found", "Список фильмов с рейтингом пуст.");
         }
     }
 
     @Override
     public void addFriend(Long userId, Long friendId) throws NotFoundException {
         if (!existsById(userId)) {
-            throw new NotFoundException("User with ID = " + userId + " not found");
+            throw new NotFoundException("User with ID = " + userId + " not found", "Список фильмов с рейтингом пуст.");
         }
         if (!existsById(friendId)) {
-            throw new NotFoundException("User with ID = " + friendId + " not found");
+            throw new NotFoundException("User with ID = " + friendId + " not found", "Список фильмов с рейтингом пуст.");
         }
 
         // Добавление друга
@@ -139,10 +143,10 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User removeFriend(Long userId, Long friendId) throws NotFoundException {
         if (!existsById(userId)) {
-            throw new NotFoundException("User with ID = " + userId + " not found");
+            throw new NotFoundException("User with ID = " + userId + " not found", "Список фильмов с рейтингом пуст.");
         }
         if (!existsById(friendId)) {
-            throw new NotFoundException("User with ID = " + friendId + " not found");
+            throw new NotFoundException("User with ID = " + friendId + " not found", "Список фильмов с рейтингом пуст.");
         }
 
         // Удаление друга
@@ -154,7 +158,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Collection<User> getFriends(Long id) throws NotFoundException {
         if (!existsById(id)) {
-            throw new NotFoundException("User with ID = " + id + " not found");
+            throw new NotFoundException("User with ID = " + id + " not found", "Список фильмов с рейтингом пуст.");
         }
 
         return jdbcTemplate.query(GET_FRIENDS, USER_ROW_MAPPER, id);
@@ -163,10 +167,10 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Collection<User> getCommonFriends(Long userId, Long otherUserId) throws NotFoundException {
         if (!existsById(userId)) {
-            throw new NotFoundException("User with ID = " + userId + " not found");
+            throw new NotFoundException("User with ID = " + userId + " not found", "Список фильмов с рейтингом пуст.");
         }
         if (!existsById(otherUserId)) {
-            throw new NotFoundException("User with ID = " + otherUserId + " not found");
+            throw new NotFoundException("User with ID = " + otherUserId + " not found", "Список фильмов с рейтингом пуст.");
         }
 
         // Получение общих друзей
@@ -185,7 +189,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     private Set<Long> getFriendIds(Long userId) {
-        return jdbcTemplate.queryForList("SELECT friend_id FROM friends WHERE user_id = ?", Long.class, userId)
+        return jdbcTemplate.queryForList("SELECT friendId FROM friends WHERE userId = ?", Long.class, userId)
                 .stream()
                 .collect(Collectors.toSet());
     }
@@ -208,6 +212,20 @@ public class UserDbStorage implements UserStorage {
         }
         if (birthday.isAfter(LocalDate.now())) {
             throw new ValidationException("Birthday cannot be in the future");
+        }
+    }
+
+    public static class FriendsExtractor implements ResultSetExtractor<Map<Long, Set<Long>>> {
+        @Override
+        public Map<Long, Set<Long>> extractData(ResultSet rs) throws SQLException {
+            Map<Long, Set<Long>> friends = new HashMap<>();
+            while (rs.next()) {
+                Long userId = rs.getLong("userId");
+                Long friendId = rs.getLong("friendId");
+
+                friends.computeIfAbsent(userId, k -> new HashSet<>()).add(friendId);
+            }
+            return friends;
         }
     }
 }
