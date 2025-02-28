@@ -107,7 +107,6 @@ public class FilmDbStorage implements FilmStorage {
         return findById(film.getId());
     }
 
-    @Override
     public void addLike(Long filmId, Long userId) throws NotFoundException {
         if (!existsById(filmId)) {
             throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId), "Список фильмов с рейтингом пуст.");
@@ -120,7 +119,6 @@ public class FilmDbStorage implements FilmStorage {
         log.info("User with ID = {} liked the film with ID = {}", userId, filmId);
     }
 
-    @Override
     public void removeLike(Long filmId, Long userId) throws NotFoundException {
         if (!existsById(filmId)) {
             throw new NotFoundException(String.format(ExceptionMessages.FILM_NOT_FOUND, filmId), "Список фильмов с рейтингом пуст.");
@@ -137,7 +135,6 @@ public class FilmDbStorage implements FilmStorage {
         log.info("User with ID = {} unliked the film with ID = {}", userId, filmId);
     }
 
-    @Override
     public List<Film> getTopFilms(int count) {
         log.info("Getting top-{} films by number of likes", count);
         return jdbcTemplate.query(GET_TOP_FILMS, FILM_ROW_MAPPER, count);
