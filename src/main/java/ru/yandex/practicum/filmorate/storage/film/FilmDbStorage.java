@@ -29,9 +29,9 @@ public class FilmDbStorage implements FilmStorage {
     private static final String FIND_FILM_BY_ID = "SELECT * FROM films WHERE id = ?";
     private static final String INSERT_FILM = "INSERT INTO films (name, description, release_date, duration) VALUES (?, ?, ?, ?)";
     private static final String UPDATE_FILM = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
-    private static final String ADD_LIKE = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
-    private static final String REMOVE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-    private static final String GET_TOP_FILMS = "SELECT f.* FROM films f LEFT JOIN likes l ON f.id = l.film_id GROUP BY f.id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+    private static final String ADD_LIKE = "INSERT INTO likes (filmID, userID) VALUES (?, ?)";
+    private static final String REMOVE_LIKE = "DELETE FROM likes WHERE filmID = ? AND userID = ?";
+    private static final String GET_TOP_FILMS = "SELECT f.* FROM films f LEFT JOIN likes l ON f.id = l.filmID GROUP BY f.id ORDER BY COUNT(l.userID) DESC LIMIT ?";
 
     // Метод для отображения строки из результата запроса в объект Film
     private static final RowMapper<Film> FILM_ROW_MAPPER = (rs, rowNum) -> Film.builder()
