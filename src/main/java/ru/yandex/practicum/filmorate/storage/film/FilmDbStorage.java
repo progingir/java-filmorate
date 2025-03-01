@@ -179,34 +179,38 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         // Создание фильма
-        List<Long> genres;
-        LinkedHashSet<Genre> genres1 = new LinkedHashSet<>();
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("film").usingGeneratedKeyColumns("id");
-        Long f = simpleJdbcInsert.executeAndReturnKey(buffer.toMapBuffer()).longValue();
-        Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new FilmService.GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(sqlQuery10, new FilmService.RatingNameExtractor());
+        try {
+            List<Long> genres;
+            LinkedHashSet<Genre> genres1 = new LinkedHashSet<>();
+            SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("film").usingGeneratedKeyColumns("id");
+            Long f = simpleJdbcInsert.executeAndReturnKey(buffer.toMapBuffer()).longValue();
+            Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new FilmService.GenreExtractor());
+            Map<Long, String> rating = jdbcTemplate.query(sqlQuery10, new FilmService.RatingNameExtractor());
 
-        // Проверка и добавление жанров
-        if (!buffer.getGenres().equals(List.of("нет жанра"))) {
-            genres = buffer.getGenres().stream().map(item -> Long.parseLong(item)).collect(Collectors.toList());
-            for (Long g : genres) {
-                if (g < 1 || g > 6) {
-                    log.error("Некорректный жанр: {}", g);
-                    throw new NotFoundException(g.toString(), "Некорректный жанр");
+            // Проверка и добавление жанров
+            if (!buffer.getGenres().equals(List.of("нет жанра"))) {
+                genres = buffer.getGenres().stream().map(Long::parseLong).toList();
+                for (Long g : genres) {
+                    if (g < 1 || g > 6) {
+                        log.error("Некорректный жанр: {}", g);
+                        throw new NotFoundException(g.toString(), "Некорректный жанр");
+                    }
+                }
+                for (Long g : genres) {
+                    jdbcTemplate.update(sqlQuery12, f, g);
+                    genres1.add(Genre.of(g, genre.get(g)));
                 }
             }
-            for (Long g : genres) {
-                jdbcTemplate.update(sqlQuery12, f, g);
-                genres1.add(Genre.of(g, genre.get(g)));
-            }
+
+            // Обновление рейтинга MPA
+            jdbcTemplate.update(sqlQuery14, buffer.getMpa(), f);
+
+            // Создание объекта FilmRequest
+            return FilmRequest.of(f, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres1);
+        } catch (DataAccessException e) {
+            log.error("Ошибка при работе с базой данных", e);
+            throw new ConditionsNotMetException("Ошибка при работе с базой данных");
         }
-
-        // Обновление рейтинга MPA
-        jdbcTemplate.update(sqlQuery14, buffer.getMpa(), f);
-
-        // Создание объекта FilmRequest
-        FilmRequest film = FilmRequest.of(f, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres1);
-        return film;
     }
 
     public FilmRequest update(@Valid Buffer newFilm) throws ConditionsNotMetException, NotFoundException {
