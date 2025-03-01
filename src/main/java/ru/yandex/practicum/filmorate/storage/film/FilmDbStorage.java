@@ -146,16 +146,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    @Override
-    public Film create(Film film) {
-        return null;
-    }
-
-    @Override
-    public Film update(Film film) throws NotFoundException {
-        return null;
-    }
-
     public FilmRequest create(@Valid Buffer buffer) throws ConditionsNotMetException, NullPointerException {
         log.info("Обработка Create-запроса...");
         if (buffer.getName() != null && !buffer.getName().isBlank() && !buffer.getName().equals("")) {
