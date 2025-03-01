@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface FilmStorage {
 
-    public List<Film> findAll();
+    List<Film> findAll();
 
-    public FilmRequest findById(Long id);
+    FilmRequest findById(Long id);
 
-    public FilmRequest create(Buffer film);
+    FilmRequest create(Buffer film);
 
-    public FilmRequest update(Buffer newFilm);
+    FilmRequest update(Buffer newFilm);
 }
