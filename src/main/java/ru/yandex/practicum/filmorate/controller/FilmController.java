@@ -37,7 +37,7 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film findById(@PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException {
+    public FilmRequest findById(@PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException {
         return filmStorage.findById(id);
     }
 

@@ -64,7 +64,7 @@ public class FilmService implements FilmInterface {
                 jdbcTemplate.update(sqlQuery2, idFilm, idUser);
             }
         }
-        Film film = filmStorage.findById(idFilm);
+        FilmRequest film = filmStorage.findById(idFilm);
         LinkedHashSet genres = new LinkedHashSet<>();
         Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery3, new FilmDbStorage.FilmGenreExtractor(), film.getId());
         if (!filmGenre.isEmpty()) {
@@ -84,7 +84,7 @@ public class FilmService implements FilmInterface {
                 throw new ConditionsNotMetException(idUser.toString());
             } else jdbcTemplate.update(sqlQuery4, idFilm, idUser);
         }
-        Film film = filmStorage.findById(idFilm);
+        FilmRequest film = filmStorage.findById(idFilm);
         LinkedHashSet genres = new LinkedHashSet<>();
         Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery3, new FilmDbStorage.FilmGenreExtractor(), film.getId());
         if (!filmGenre.isEmpty()) {
