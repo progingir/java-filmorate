@@ -19,6 +19,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
@@ -153,7 +154,7 @@ public class FilmDbStorage implements FilmStorage {
             if (buffer.getDescription().length() > 200) {
                 log.error("Exception", new ConditionsNotMetException("Максимальная длина описания — 200 символов"));
                 throw new ConditionsNotMetException("Максимальная длина описания — 200 символов");
-            } else if (buffer.getReleaseDate().isBefore(ChronoLocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0, 0)))) {
+            } else if (buffer.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
                 log.error("Exception", new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года"));
                 throw new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года");
             } else if (buffer.getDuration() != null && buffer.getDuration() != 0) {
