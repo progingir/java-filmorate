@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
@@ -104,36 +105,43 @@ public class UserDbStorage implements UserStorage {
         return List.of();
     }
 
-    public User create(@Valid User user) throws ConditionsNotMetException, DuplicatedDataException {
+    public User create(@Valid User user) throws DuplicatedDataException, ValidationException {
         log.info("Обработка Create-запроса...");
-        this.duplicateCheck(user);
-        if (user.getEmail() != null && !user.getEmail().isBlank() && user.getEmail().contains("@") && !user.getEmail().contains(" ") && user.getEmail().length() != 1) {
-            if (user.getLogin() != null && !user.getLogin().contains(" ") && !user.getLogin().isBlank()) {
-                if (user.getName() == null || user.getName().isBlank()) {
-                    user.setName(user.getLogin());
-                }
 
-                if (user.getBirthday() != null) {
-                    if (user.getBirthday().isAfter(LocalDate.now())) {
-                        log.error("Exception", new ConditionsNotMetException("Дата рождения не может быть в будущем"));
-                        throw new ConditionsNotMetException("Дата рождения не может быть в будущем");
-                    } else {
-                        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("users").usingGeneratedKeyColumns("id");
-                        Long f = simpleJdbcInsert.executeAndReturnKey(user.toMapUser()).longValue();
-                        return findById(f);
-                    }
-                } else {
-                    log.error("Exception", new ConditionsNotMetException("Дата рождения не может быть нулевой"));
-                    throw new ConditionsNotMetException("Дата рождения не может быть нулевой");
-                }
-            } else {
-                log.error("Exception", new ConditionsNotMetException("Логин не может быть пустым и содержать пробелы"));
-                throw new ConditionsNotMetException("Логин не может быть пустым и содержать пробелы");
-            }
-        } else {
-            log.error("Exception", new ConditionsNotMetException("Электронная почта не может быть пустой и должна содержать символ @"));
-            throw new ConditionsNotMetException("Электронная почта не может быть пустой и должна содержать символ @");
+        // Проверка на дубликат email
+        duplicateCheck(user);
+
+        // Проверка email
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
+
+        // Проверка логина
+        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+            throw new ValidationException("Логин не может быть пустым и содержать пробелы");
+        }
+
+        // Проверка имени
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+
+        // Проверка даты рождения
+        if (user.getBirthday() == null) {
+            throw new ValidationException("Дата рождения не может быть нулевой");
+        }
+        if (user.getBirthday().isAfter(LocalDate.now())) {
+            throw new ValidationException("Дата рождения не может быть в будущем");
+        }
+
+        // Создание пользователя
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("users")
+                .usingGeneratedKeyColumns("id");
+        Long id = simpleJdbcInsert.executeAndReturnKey(user.toMapUser()).longValue();
+        user.setId(id);
+
+        return user;
     }
 
     private void duplicateCheck(User user) throws DuplicatedDataException {
@@ -144,55 +152,56 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public User update(@Valid User newUser) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public User update(@Valid User newUser) throws NotFoundException, DuplicatedDataException, ValidationException {
+        log.info("Обработка Update-запроса...");
+
+        // Проверка на наличие ID
         if (newUser.getId() == null) {
-            log.error("Exception", new ConditionsNotMetException("Id должен быть указан"));
-            throw new ConditionsNotMetException("Id должен быть указан");
-        } else {
-            try {
-                jdbcTemplate.queryForObject(sqlQuery3, this::mapRowToUser, newUser.getId());
-            } catch (DataAccessException e) {
-                if (e != null) {
-                    log.error("Exception", new NotFoundException(newUser.getId().toString(), "Пользователь с указанным id не найден"));
-                    throw new NotFoundException(newUser.getId().toString(), "Пользователь с указанным id не найден");
-                }
-            }
-            User oldUser = jdbcTemplate.queryForObject(sqlQuery3, this::mapRowToUser, newUser.getId());
-            if (newUser.getEmail() != null && !newUser.getEmail().isBlank() && newUser.getEmail().contains("@") && !newUser.getEmail().contains(" ") && newUser.getEmail().length() != 1) {
-                if (!newUser.getEmail().equals(oldUser.getEmail())) {
-                    this.duplicateCheck(newUser);
-                    oldUser.setEmail(newUser.getEmail());
-                }
-
-                if (newUser.getLogin() != null && !newUser.getLogin().contains(" ") && !newUser.getLogin().isBlank()) {
-                    oldUser.setLogin(newUser.getLogin());
-                    if (newUser.getName() != null && !newUser.getName().isBlank()) {
-                        oldUser.setName(newUser.getName());
-                    } else {
-                        oldUser.setName(newUser.getLogin());
-                    }
-
-                    if (newUser.getBirthday() != null) {
-                        if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                            log.error("Exception", new ConditionsNotMetException("Дата рождения не может быть в будущем"));
-                            throw new ConditionsNotMetException("Дата рождения не может быть в будущем");
-                        } else {
-                            oldUser.setBirthday(newUser.getBirthday());
-                            jdbcTemplate.update(sqlQuery5, oldUser.getName(), oldUser.getEmail(), oldUser.getLogin(), oldUser.getBirthday(), oldUser.getId());
-                            return oldUser;
-                        }
-                    } else {
-                        log.error("Exception", new ConditionsNotMetException("Дата рождения не может быть нулевой"));
-                        throw new ConditionsNotMetException("Дата рождения не может быть нулевой");
-                    }
-                } else {
-                    log.error("Exception", new ConditionsNotMetException("Логин не может быть пустым и содержать пробелы"));
-                    throw new ConditionsNotMetException("Логин не может быть пустым и содержать пробелы");
-                }
-            } else {
-                log.error("Exception", new ConditionsNotMetException("Электронная почта не может быть пустой и должна содержать символ @"));
-                throw new ConditionsNotMetException("Электронная почта не может быть пустой и должна содержать символ @");
-            }
+            throw new ValidationException("Id должен быть указан");
         }
+
+        // Поиск существующего пользователя
+        User oldUser = findById(newUser.getId());
+        if (oldUser == null) {
+            throw new NotFoundException("oldUser", "Пользователь с указанным id не найден");
+        }
+
+        // Проверка email
+        if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")) {
+            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
+        }
+
+        // Проверка на дубликат email
+        if (!newUser.getEmail().equals(oldUser.getEmail())) {
+            duplicateCheck(newUser);
+        }
+
+        // Проверка логина
+        if (newUser.getLogin() == null || newUser.getLogin().isBlank() || newUser.getLogin().contains(" ")) {
+            throw new ValidationException("Логин не может быть пустым и содержать пробелы");
+        }
+
+        // Проверка имени
+        if (newUser.getName() == null || newUser.getName().isBlank()) {
+            newUser.setName(newUser.getLogin());
+        }
+
+        // Проверка даты рождения
+        if (newUser.getBirthday() == null) {
+            throw new ValidationException("Дата рождения не может быть нулевой");
+        }
+        if (newUser.getBirthday().isAfter(LocalDate.now())) {
+            throw new ValidationException("Дата рождения не может быть в будущем");
+        }
+
+        // Обновление пользователя
+        jdbcTemplate.update(sqlQuery5,
+                newUser.getName(),
+                newUser.getEmail(),
+                newUser.getLogin(),
+                newUser.getBirthday(),
+                newUser.getId());
+
+        return newUser;
     }
 }
