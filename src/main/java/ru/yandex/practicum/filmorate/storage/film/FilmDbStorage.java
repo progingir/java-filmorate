@@ -19,7 +19,8 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -145,151 +146,121 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    @Override
     public FilmRequest create(@Valid Buffer buffer) throws ConditionsNotMetException, NullPointerException {
         log.info("Обработка Create-запроса...");
-
-        // Проверка названия фильма
-        if (buffer.getName() == null || buffer.getName().isBlank()) {
-            log.error("Название не может быть пустым");
-            throw new ConditionsNotMetException("Название не может быть пустым");
-        }
-
-        // Проверка описания фильма
-        if (buffer.getDescription() == null || buffer.getDescription().length() > 200) {
-            log.error("Максимальная длина описания — 200 символов");
-            throw new ConditionsNotMetException("Максимальная длина описания — 200 символов");
-        }
-
-        // Проверка даты выпуска
-        if (buffer.getReleaseDate() == null || buffer.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.error("Дата релиза — не раньше 28 декабря 1895 года");
-            throw new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года");
-        }
-
-        // Проверка продолжительности фильма
-        if (buffer.getDuration() == null || buffer.getDuration() <= 0) {
-            log.error("Продолжительность фильма должна быть положительным числом");
-            throw new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом");
-        }
-
-        // Проверка рейтинга MPA
-        if (buffer.getMpa() == null || buffer.getMpa() < 1 || buffer.getMpa() > 5) {
-            log.error("Некорректный рейтинг: {}", buffer.getMpa());
-            throw new NotFoundException(buffer.getMpa().toString(), "Некорректный рейтинг");
-        }
-
-        // Создание фильма
-        try {
-            List<Long> genres;
-            LinkedHashSet<Genre> genres1 = new LinkedHashSet<>();
-            SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("film").usingGeneratedKeyColumns("id");
-            Long f = simpleJdbcInsert.executeAndReturnKey(buffer.toMapBuffer()).longValue();
-            Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new FilmService.GenreExtractor());
-            Map<Long, String> rating = jdbcTemplate.query(sqlQuery10, new FilmService.RatingNameExtractor());
-
-            // Проверка и добавление жанров
-            if (!buffer.getGenres().equals(List.of("нет жанра"))) {
-                genres = buffer.getGenres().stream().map(Long::parseLong).toList();
-                for (Long g : genres) {
-                    if (g < 1 || g > 6) {
-                        log.error("Некорректный жанр: {}", g);
-                        throw new NotFoundException(g.toString(), "Некорректный жанр");
+        if (buffer.getName() != null && !buffer.getName().isBlank() && !buffer.getName().equals("")) {
+            if (buffer.getDescription().length() > 200) {
+                log.error("Exception", new ConditionsNotMetException("Максимальная длина описания — 200 символов"));
+                throw new ConditionsNotMetException("Максимальная длина описания — 200 символов");
+            } else if (buffer.getReleaseDate().isBefore(ChronoLocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0, 0)))) {
+                log.error("Exception", new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года"));
+                throw new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года");
+            } else if (buffer.getDuration() != null && buffer.getDuration() != 0) {
+                if (buffer.getDuration() < 0) {
+                    log.error("Exception", new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом"));
+                    throw new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом");
+                } else if (!(buffer.getMpa() > 0 && buffer.getMpa() < 6)) {
+                    log.error("Exception", new NotFoundException(buffer.getMpa().toString(), "Некорректный рейтинг"));
+                    throw new NotFoundException(buffer.getMpa().toString(), "Некорректный рейтинг");
+                } else {
+                    List<Long> genres;
+                    LinkedHashSet<Genre> genres1 = new LinkedHashSet<>();
+                    String sqlQuery;
+                    SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("film").usingGeneratedKeyColumns("id");
+                    Long f = simpleJdbcInsert.executeAndReturnKey(buffer.toMapBuffer()).longValue();
+                    Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new FilmService.GenreExtractor());
+                    Map<Long, String> rating = jdbcTemplate.query(sqlQuery10, new FilmService.RatingNameExtractor());
+                    if (!buffer.getGenres().equals(List.of("нет жанра"))) {
+                        genres = buffer.getGenres().stream().map(item -> Long.parseLong(item)).collect(Collectors.toList());
+                        for (Long g : genres) {
+                            if (!(g > 0 && g < 7)) {
+                                log.error("Exception", new NotFoundException(g.toString(), "Некорректный жанр"));
+                                throw new NotFoundException(g.toString(), "Некорректный жанр");
+                            }
+                        }
+                        for (Long g : genres) {
+                            jdbcTemplate.update(sqlQuery12, f, g);
+                            genres1.add(Genre.of(g, genre.get(g)));
+                        }
                     }
+                    jdbcTemplate.update(sqlQuery14, buffer.getMpa(), f);
+
+                    FilmRequest film = FilmRequest.of(f, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres1);
+                    return film;
                 }
-                for (Long g : genres) {
-                    jdbcTemplate.update(sqlQuery12, f, g);
-                    genres1.add(Genre.of(g, genre.get(g)));
-                }
+            } else {
+                log.error("Exception", new NullPointerException("Продолжительность фильма не может быть нулевой"));
+                throw new NullPointerException("Продолжительность фильма не может быть нулевой");
             }
-
-            // Обновление рейтинга MPA
-            jdbcTemplate.update(sqlQuery14, buffer.getMpa(), f);
-
-            // Создание объекта FilmRequest
-            return FilmRequest.of(f, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres1);
-        } catch (DataAccessException e) {
-            log.error("Ошибка при работе с базой данных", e);
-            throw new ConditionsNotMetException("Ошибка при работе с базой данных");
-        }
-    }
-
-    public FilmRequest update(@Valid Buffer newFilm) throws ConditionsNotMetException, NotFoundException {
-        log.info("Обработка Put-запроса...");
-
-        // Проверка ID фильма
-        if (newFilm.getId() == null) {
-            log.error("Exception", new ConditionsNotMetException("Id должен быть указан"));
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-
-        // Проверка названия фильма
-        if (newFilm.getName() == null || newFilm.getName().isBlank()) {
+        } else {
             log.error("Exception", new ConditionsNotMetException("Название не может быть пустым"));
             throw new ConditionsNotMetException("Название не может быть пустым");
         }
+    }
 
-        // Проверка описания фильма
-        if (newFilm.getDescription() == null || newFilm.getDescription().length() > 200) {
-            log.error("Exception", new ConditionsNotMetException("Максимальная длина описания — 200 символов"));
-            throw new ConditionsNotMetException("Максимальная длина описания — 200 символов");
-        }
-
-        // Проверка даты выпуска
-        if (newFilm.getReleaseDate() == null || newFilm.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.error("Exception", new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года"));
-            throw new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года");
-        }
-
-        // Проверка продолжительности фильма
-        if (newFilm.getDuration() == null || newFilm.getDuration() <= 0) {
-            log.error("Exception", new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом"));
-            throw new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом");
-        }
-
-        // Проверка рейтинга MPA
-        if (newFilm.getMpa() == null || newFilm.getMpa() < 1 || newFilm.getMpa() > 5) {
-            log.error("Exception", new NotFoundException(newFilm.getMpa().toString(), "Некорректный рейтинг"));
-            throw new NotFoundException(newFilm.getMpa().toString(), "Некорректный рейтинг");
-        }
-
-        // Получение старого фильма
-        FilmRequest oldFilm = findById(newFilm.getId());
-
-        // Обновление данных фильма
-        oldFilm.setName(newFilm.getName());
-        oldFilm.setDescription(newFilm.getDescription());
-        oldFilm.setReleaseDate(newFilm.getReleaseDate());
-        oldFilm.setDuration(newFilm.getDuration());
-
-        // Обновление жанров
-        LinkedHashSet<Genre> genres1 = new LinkedHashSet<>();
-        Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new FilmService.GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(sqlQuery10, new FilmService.RatingNameExtractor());
-
-        if (!newFilm.getGenres().equals(List.of("нет жанра"))) {
-            List<Long> genres = newFilm.getGenres().stream().map(item -> Long.parseLong(item)).collect(Collectors.toList());
-            for (Long g : genres) {
-                if (g < 1 || g > 6) {
-                    log.error("Exception", new NotFoundException(g.toString(), "Некорректный жанр"));
-                    throw new NotFoundException(g.toString(), "Некорректный жанр");
+    @Override
+    public FilmRequest update(@Valid Buffer newFilm) throws ConditionsNotMetException, NotFoundException {
+        log.info("Обработка Put-запроса...");
+        if (newFilm.getId() == null) {
+            log.error("Exception", new ConditionsNotMetException("Id должен быть указан"));
+            throw new ConditionsNotMetException("Id должен быть указан");
+        } else {
+            FilmRequest oldFilm = findById(newFilm.getId());
+            if (newFilm.getName() != null && !newFilm.getName().isBlank()) {
+                oldFilm.setName(newFilm.getName());
+                if (newFilm.getDescription().length() > 200) {
+                    log.error("Exception", new ConditionsNotMetException("Максимальная длина описания — 200 символов"));
+                    throw new ConditionsNotMetException("Максимальная длина описания — 200 символов");
+                } else {
+                    oldFilm.setDescription(newFilm.getDescription());
+                    if (newFilm.getReleaseDate().isBefore(ChronoLocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0, 0)))) {
+                        log.error("Exception", new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года"));
+                        throw new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года");
+                    } else {
+                        oldFilm.setReleaseDate(newFilm.getReleaseDate());
+                        if (newFilm.getDuration() != null && newFilm.getDuration() != 0) {
+                            if (newFilm.getDuration() < 0) {
+                                log.error("Exception", new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом"));
+                                throw new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом");
+                            } else {
+                                oldFilm.setDuration(newFilm.getDuration());
+                                if (!(newFilm.getMpa() > 0 && newFilm.getMpa() < 6)) {
+                                    log.error("Exception", new NotFoundException(newFilm.getMpa().toString(), "Некорректный рейтинг"));
+                                    throw new NotFoundException(newFilm.getMpa().toString(), "Некорректный рейтинг");
+                                }
+                                LinkedHashSet<Genre> genres1 = new LinkedHashSet<>();
+                                Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new FilmService.GenreExtractor());
+                                Map<Long, String> rating = jdbcTemplate.query(sqlQuery10, new FilmService.RatingNameExtractor());
+                                if (!newFilm.getGenres().equals(List.of("нет жанра"))) {
+                                    List<Long> genres = newFilm.getGenres().stream().map(item -> Long.parseLong(item)).collect(Collectors.toList());
+                                    for (Long g : genres) {
+                                        if (!(g > 0 && g < 7)) {
+                                            log.error("Exception", new NotFoundException(g.toString(), "Некорректный жанр"));
+                                            throw new NotFoundException(g.toString(), "Некорректный жанр");
+                                        }
+                                    }
+                                    jdbcTemplate.update(sqlQuery11, oldFilm.getId());
+                                    for (Long g : genres) {
+                                        jdbcTemplate.update(sqlQuery12, oldFilm.getId(), g);
+                                        genres1.add(Genre.of(g, genre.get(g)));
+                                    }
+                                }
+                                if (!oldFilm.getMpa().equals(newFilm.getMpa()) && newFilm.getMpa() > 0 && newFilm.getMpa() < 6)
+                                    oldFilm.setMpa(Mpa.of(newFilm.getMpa(), rating.get(newFilm.getMpa())));
+                                jdbcTemplate.update(sqlQuery13, oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(), oldFilm.getDuration(), oldFilm.getMpa().getId(), oldFilm.getId());
+                                return FilmRequest.of(oldFilm.getId(), oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(), oldFilm.getDuration(), new HashSet<>(), oldFilm.getMpa(), genres1);
+                            }
+                        } else {
+                            log.error("Exception", new NullPointerException("Продолжительность фильма не может быть нулевой"));
+                            throw new NullPointerException("Продолжительность фильма не может быть нулевой");
+                        }
+                    }
                 }
-            }
-            jdbcTemplate.update(sqlQuery11, oldFilm.getId());
-            for (Long g : genres) {
-                jdbcTemplate.update(sqlQuery12, oldFilm.getId(), g);
-                genres1.add(Genre.of(g, genre.get(g)));
+            } else {
+                log.error("Exception", new ConditionsNotMetException("Название не может быть пустым"));
+                throw new ConditionsNotMetException("Название не может быть пустым");
             }
         }
-
-        // Обновление рейтинга MPA
-        if (!oldFilm.getMpa().equals(newFilm.getMpa())) {
-            oldFilm.setMpa(Mpa.of(newFilm.getMpa(), rating.get(newFilm.getMpa())));
-        }
-
-        // Обновление фильма в базе данных
-        jdbcTemplate.update(sqlQuery13, oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(), oldFilm.getDuration(), oldFilm.getMpa().getId(), oldFilm.getId());
-
-        // Возврат обновленного фильма
-        return FilmRequest.of(oldFilm.getId(), oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(), oldFilm.getDuration(), new HashSet<>(), oldFilm.getMpa(), genres1);
     }
 }
