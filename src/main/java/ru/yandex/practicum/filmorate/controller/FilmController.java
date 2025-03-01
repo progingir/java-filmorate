@@ -21,20 +21,21 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/films")
-
 public class FilmController {
-    @Autowired
-    @Qualifier("FilmDbStorage")
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String DEFAULT_GENRE = "нет жанра";
+
     private final FilmStorage filmStorage;
-
-    @Autowired
-    @Qualifier("UserDbStorage")
     private final UserStorage userStorage;
-
     private final FilmInterface filmInterface;
 
     @Autowired
-    public FilmController(FilmStorage filmStorage, UserStorage userStorage, FilmInterface filmInterface) {
+    public FilmController(
+            @Qualifier("FilmDbStorage") FilmStorage filmStorage,
+            @Qualifier("UserDbStorage") UserStorage userStorage,
+            FilmInterface filmInterface
+    ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.filmInterface = filmInterface;
@@ -53,37 +54,14 @@ public class FilmController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FilmRequest create(@Valid @RequestBody ObjectNode objectNode) throws ConditionsNotMetException, NullPointerException {
-        String name = objectNode.get("name").asText();
-        String description = objectNode.get("description").asText();
-        String releaseDate = objectNode.get("releaseDate").asText();
-        Integer duration = objectNode.get("duration").asInt();
-        List<String> mpa = objectNode.get("mpa").findValuesAsText("id");
-        List<String> genres = new ArrayList<>();
-        try {
-            genres = objectNode.get("genres").findValuesAsText("id");
-        } catch (NullPointerException e) {
-            genres = List.of("нет жанра");
-        } finally {
-            return filmStorage.create(Buffer.of(Long.valueOf(0), name, description, LocalDate.parse(releaseDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")), duration, genres, Long.valueOf(mpa.get(0).toString())));
-        }
+        Buffer buffer = parseObjectNodeToBuffer(objectNode);
+        return filmStorage.create(buffer);
     }
 
     @PutMapping
     public FilmRequest update(@Valid @RequestBody ObjectNode objectNode) throws ConditionsNotMetException, NotFoundException {
-        Long id = objectNode.get("id").asLong();
-        String name = objectNode.get("name").asText();
-        String description = objectNode.get("description").asText();
-        String releaseDate = objectNode.get("releaseDate").asText();
-        Integer duration = objectNode.get("duration").asInt();
-        List<String> mpa = objectNode.get("mpa").findValuesAsText("id");
-        List<String> genres = new ArrayList<>();
-        try {
-            genres = objectNode.get("genres").findValuesAsText("id");
-        } catch (NullPointerException e) {
-            genres = List.of("нет жанра");
-        } finally {
-            return filmStorage.update(Buffer.of(id, name, description, LocalDate.parse(releaseDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")), duration, genres, Long.valueOf(mpa.get(0).toString())));
-        }
+        Buffer buffer = parseObjectNodeToBuffer(objectNode);
+        return filmStorage.update(buffer);
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -97,7 +75,47 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public LinkedHashSet<FilmRequest> viewRaiting(@RequestParam(required = false) Long count) throws NotFoundException {
+    public LinkedHashSet<FilmRequest> viewRating(@RequestParam(required = false) Long count) throws NotFoundException {
         return filmInterface.viewRating(count);
+    }
+
+    /**
+     * преобразует json объект в объект Buffer
+     *
+     * @param objectNode json объект
+     * @return объект Buffer
+     */
+    private Buffer parseObjectNodeToBuffer(ObjectNode objectNode) {
+        Long id = objectNode.has("id") ? objectNode.get("id").asLong() : 0L;
+        String name = objectNode.get("name").asText();
+        String description = objectNode.get("description").asText();
+        String releaseDate = objectNode.get("releaseDate").asText();
+        Integer duration = objectNode.get("duration").asInt();
+        List<String> mpa = objectNode.get("mpa").findValuesAsText("id");
+        List<String> genres = extractGenresFromObjectNode(objectNode);
+
+        return Buffer.of(
+                id,
+                name,
+                description,
+                LocalDate.parse(releaseDate, DATE_FORMATTER),
+                duration,
+                genres,
+                Long.valueOf(mpa.get(0))
+        );
+    }
+
+    /**
+     * извлекает список жанров из json объекта
+     *
+     * @param objectNode json объект
+     * @return список жанров
+     */
+    private List<String> extractGenresFromObjectNode(ObjectNode objectNode) {
+        try {
+            return objectNode.get("genres").findValuesAsText("id");
+        } catch (NullPointerException e) {
+            return List.of(DEFAULT_GENRE);
+        }
     }
 }
