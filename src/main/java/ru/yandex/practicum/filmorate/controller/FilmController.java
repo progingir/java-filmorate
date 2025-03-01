@@ -95,4 +95,9 @@ public class FilmController {
     public FilmRequest delLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) throws NotFoundException {
         return filmInterface.delLike(userId, id);
     }
+
+    @GetMapping("/popular")
+    public LinkedHashSet<FilmRequest> viewRaiting(@RequestParam(required = false) Long count) throws NotFoundException {
+        return filmInterface.viewRating(count);
+    }
 }
