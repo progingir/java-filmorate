@@ -150,31 +150,31 @@ public class FilmDbStorage implements FilmStorage {
 
         // Проверка названия фильма
         if (buffer.getName() == null || buffer.getName().isBlank()) {
-            log.error("Exception", new ConditionsNotMetException("Название не может быть пустым"));
+            log.error("Название не может быть пустым");
             throw new ConditionsNotMetException("Название не может быть пустым");
         }
 
         // Проверка описания фильма
         if (buffer.getDescription() == null || buffer.getDescription().length() > 200) {
-            log.error("Exception", new ConditionsNotMetException("Максимальная длина описания — 200 символов"));
+            log.error("Максимальная длина описания — 200 символов");
             throw new ConditionsNotMetException("Максимальная длина описания — 200 символов");
         }
 
         // Проверка даты выпуска
         if (buffer.getReleaseDate() == null || buffer.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.error("Exception", new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года"));
+            log.error("Дата релиза — не раньше 28 декабря 1895 года");
             throw new ConditionsNotMetException("Дата релиза — не раньше 28 декабря 1895 года");
         }
 
         // Проверка продолжительности фильма
         if (buffer.getDuration() == null || buffer.getDuration() <= 0) {
-            log.error("Exception", new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом"));
+            log.error("Продолжительность фильма должна быть положительным числом");
             throw new ConditionsNotMetException("Продолжительность фильма должна быть положительным числом");
         }
 
         // Проверка рейтинга MPA
         if (buffer.getMpa() == null || buffer.getMpa() < 1 || buffer.getMpa() > 5) {
-            log.error("Exception", new NotFoundException(buffer.getMpa().toString(), "Некорректный рейтинг"));
+            log.error("Некорректный рейтинг: {}", buffer.getMpa());
             throw new NotFoundException(buffer.getMpa().toString(), "Некорректный рейтинг");
         }
 
@@ -191,7 +191,7 @@ public class FilmDbStorage implements FilmStorage {
             genres = buffer.getGenres().stream().map(item -> Long.parseLong(item)).collect(Collectors.toList());
             for (Long g : genres) {
                 if (g < 1 || g > 6) {
-                    log.error("Exception", new NotFoundException(g.toString(), "Некорректный жанр"));
+                    log.error("Некорректный жанр: {}", g);
                     throw new NotFoundException(g.toString(), "Некорректный жанр");
                 }
             }
