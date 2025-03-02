@@ -29,15 +29,16 @@ public class FilmService implements FilmInterface {
     FilmStorage filmStorage;
     private final JdbcTemplate jdbcTemplate;
 
-    private final String sqlQuery1 = "select filmId, userId from likedUsers";
-    private final String sqlQuery2 = "insert into likedUsers(filmId, userId) " + "values (?, ?)";
-    private final String sqlQuery3 = "select filmId, genreId from filmGenre where filmId = ?";
-    private final String sqlQuery4 = "delete from likedUsers where filmId = ? and userId = ?";
-    private final String sqlQuery5 = "select f.id as name, COUNT(l.userId) as coun from likedUsers as l LEFT OUTER JOIN film AS f ON l.filmId = f.id GROUP BY f.name ORDER BY COUNT(l.userId) DESC LIMIT 10";
-    private final String sqlQuery6 = "select id, name from genre";
-    private final String sqlQuery7 = "select id, name from genre where id = ?";
-    private final String sqlQuery8 = "select id, rating from filmrating";
-    private final String sqlQuery9 = "select id, rating from filmrating where id = ?";
+    // SQL-запросы
+    private final String selectLikedUsersQuery = "select filmId, userId from likedUsers";
+    private final String insertLikeQuery = "insert into likedUsers(filmId, userId) values (?, ?)";
+    private final String selectFilmGenresQuery = "select filmId, genreId from filmGenre where filmId = ?";
+    private final String deleteLikeQuery = "delete from likedUsers where filmId = ? and userId = ?";
+    private final String selectTopFilmsQuery = "select f.id as name, COUNT(l.userId) as coun from likedUsers as l LEFT OUTER JOIN film AS f ON l.filmId = f.id GROUP BY f.name ORDER BY COUNT(l.userId) DESC LIMIT 10";
+    private final String selectAllGenresQuery = "select id, name from genre";
+    private final String selectGenreByIdQuery = "select id, name from genre where id = ?";
+    private final String selectAllRatingsQuery = "select id, rating from filmrating";
+    private final String selectRatingByIdQuery = "select id, rating from filmrating where id = ?";
 
     public static class TopLikedUsersExtractor implements ResultSetExtractor<LinkedHashMap<Long, Long>> {
         @Override
@@ -56,17 +57,17 @@ public class FilmService implements FilmInterface {
     public FilmRequest addLike(Long idUser, Long idFilm) {
         log.info("Обработка Post-запроса...");
         if (userStorage.findById(idUser) != null && filmStorage.findById(idFilm) != null) {
-            Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(sqlQuery1, new FilmDbStorage.LikedUsersExtractor());
+            Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(selectLikedUsersQuery, new FilmDbStorage.LikedUsersExtractor());
             if (likedUsers.get(idFilm) != null && likedUsers.get(idFilm).contains(idUser)) {
                 log.error("Exception", new ConditionsNotMetException(idUser.toString()));
                 throw new ConditionsNotMetException(idUser.toString());
             } else {
-                jdbcTemplate.update(sqlQuery2, idFilm, idUser);
+                jdbcTemplate.update(insertLikeQuery, idFilm, idUser);
             }
         }
         FilmRequest film = filmStorage.findById(idFilm);
         LinkedHashSet genres = new LinkedHashSet<>();
-        Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery3, new FilmDbStorage.FilmGenreExtractor(), film.getId());
+        Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), film.getId());
         if (!filmGenre.isEmpty()) {
             for (Long g : filmGenre.get(film.getId()))
                 genres.add(g);
@@ -78,15 +79,15 @@ public class FilmService implements FilmInterface {
     public FilmRequest delLike(Long idUser, Long idFilm) {
         log.info("Обработка Del-запроса...");
         if (userStorage.findById(idUser) != null && filmStorage.findById(idFilm) != null) {
-            Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(sqlQuery1, new FilmDbStorage.LikedUsersExtractor());
+            Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(selectLikedUsersQuery, new FilmDbStorage.LikedUsersExtractor());
             if (likedUsers.get(idFilm) != null && !likedUsers.get(idFilm).contains(idUser)) {
                 log.error("Exception", new ConditionsNotMetException(idUser.toString()));
                 throw new ConditionsNotMetException(idUser.toString());
-            } else jdbcTemplate.update(sqlQuery4, idFilm, idUser);
+            } else jdbcTemplate.update(deleteLikeQuery, idFilm, idUser);
         }
         FilmRequest film = filmStorage.findById(idFilm);
         LinkedHashSet genres = new LinkedHashSet<>();
-        Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery3, new FilmDbStorage.FilmGenreExtractor(), film.getId());
+        Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), film.getId());
         if (!filmGenre.isEmpty()) {
             for (Long g : filmGenre.get(film.getId()))
                 genres.add(g);
@@ -100,15 +101,15 @@ public class FilmService implements FilmInterface {
 
     public LinkedHashSet<FilmRequest> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(sqlQuery5, new TopLikedUsersExtractor());
+        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
         LinkedHashSet<FilmRequest> films = new LinkedHashSet<>();
         if (likedUsers == null) {
-            log.error("Exception", new NotFoundException(count.toString(), "Список фильмов с рейтингом пуст."));
-            throw new NotFoundException(count.toString(), "Список фильмов с рейтингом пуст.");
+            log.error("Exception", new NotFoundException("Список фильмов с рейтингом пуст."));
+            throw new NotFoundException("Список фильмов с рейтингом пуст.");
         } else {
             LinkedHashSet genres = new LinkedHashSet<>();
             for (Long l : likedUsers.keySet()) {
-                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery3, new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
+                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
                 if (!filmGenre.isEmpty()) {
                     for (Long g : filmGenre.get(filmStorage.findById(l).getId()))
                         genres.add(g);
@@ -121,7 +122,7 @@ public class FilmService implements FilmInterface {
 
     public List<GenreConstant> viewGenre() {
         log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(sqlQuery6, new GenreExtractor());
+        Map<Long, String> genre = jdbcTemplate.query(selectAllGenresQuery, new GenreExtractor());
         List<GenreConstant> genreConstant = new ArrayList<>();
         for (Long l : genre.keySet())
             genreConstant.add(GenreConstant.of(l, genre.get(l)));
@@ -143,16 +144,16 @@ public class FilmService implements FilmInterface {
 
     public GenreConstant viewGenreName(Long id) {
         log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(sqlQuery7, new GenreExtractor(), id);
+        Map<Long, String> genre = jdbcTemplate.query(selectGenreByIdQuery, new GenreExtractor(), id);
         if (id < 0 || id > 7) {
-            log.error("Exception", new NotFoundException("NULL", "Жанра с указанным идентификатором не существует."));
-            throw new NotFoundException("NULL", "Жанра с указанным идентификатором не существует.");
+            log.error("Exception", new NotFoundException("Жанра с указанным идентификатором не существует."));
+            throw new NotFoundException("Жанра с указанным идентификатором не существует.");
         } else return GenreConstant.of(id, genre.get(id));
     }
 
     public List<Mpa> viewFilmsRating() {
         log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(sqlQuery8, new RatingNameExtractor());
+        Map<Long, String> genre = jdbcTemplate.query(selectAllRatingsQuery, new RatingNameExtractor());
         List<Mpa> mpaConstant = new ArrayList<>();
         for (Long l : genre.keySet())
             mpaConstant.add(Mpa.of(l, genre.get(l)));
@@ -174,10 +175,10 @@ public class FilmService implements FilmInterface {
 
     public Mpa viewRatingName(Long id) {
         log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new RatingNameExtractor(), id);
+        Map<Long, String> genre = jdbcTemplate.query(selectRatingByIdQuery, new RatingNameExtractor(), id);
         if (id < 0 || id > 6) {
-            log.error("Exception", new NotFoundException("NULL", "Рейтинг с указанным идентификатором не существует."));
-            throw new NotFoundException("NULL", "Рейтинг с указанным идентификатором не существует.");
+            log.error("Exception", new NotFoundException("Рейтинг с указанным идентификатором не существует."));
+            throw new NotFoundException("Рейтинг с указанным идентификатором не существует.");
         } else return Mpa.of(id, genre.get(id));
     }
 }

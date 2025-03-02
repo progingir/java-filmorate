@@ -24,7 +24,7 @@ public class GenreDbStorage implements GenreStorage {
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> Genre.of(rs.getLong("id"), rs.getString("name")), id);
         } catch (DataAccessException e) {
-            throw new NotFoundException(id.toString(), "Genre with id " + id + " not found");
+            throw new NotFoundException("Genre with id " + id + " not found");
         }
     }
 

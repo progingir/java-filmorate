@@ -87,8 +87,8 @@ public class UserDbStorage implements UserStorage {
                 jdbcTemplate.queryForObject(sqlQuery3, this::mapRowToUser, id);
             } catch (DataAccessException e) {
                 if (e != null) {
-                    log.error("Exception", new NotFoundException(id.toString(), "Пользователь с данным идентификатором отсутствует в базе"));
-                    throw new NotFoundException(id.toString(), "Пользователь с данным идентификатором отсутствует в базе");
+                    log.error("Exception", new NotFoundException("Пользователь с данным идентификатором отсутствует в базе"));
+                    throw new NotFoundException("Пользователь с данным идентификатором отсутствует в базе");
                 }
             }
             User user = jdbcTemplate.queryForObject(sqlQuery3, this::mapRowToUser, id);
@@ -163,7 +163,7 @@ public class UserDbStorage implements UserStorage {
         // Поиск существующего пользователя
         User oldUser = findById(newUser.getId());
         if (oldUser == null) {
-            throw new NotFoundException("oldUser", "Пользователь с указанным id не найден");
+            throw new NotFoundException("Пользователь с указанным id не найден");
         }
 
         // Проверка email

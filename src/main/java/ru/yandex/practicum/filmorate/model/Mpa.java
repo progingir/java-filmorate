@@ -8,6 +8,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor(staticName = "of")
 public class Mpa {
-    Long id;
-    String name;
+    private Long id;
+    private String name;
 }

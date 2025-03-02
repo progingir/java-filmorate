@@ -24,7 +24,7 @@ public class MpaDbStorage implements MpaStorage {
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> Mpa.of(rs.getLong("id"), rs.getString("rating")), id);
         } catch (DataAccessException e) {
-            throw new NotFoundException(id.toString(), "MPA with id " + id + " not found");
+            throw new NotFoundException("MPA with id " + id + " not found");
         }
     }
 

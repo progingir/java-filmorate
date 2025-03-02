@@ -122,7 +122,7 @@ public class UserService implements UserInterface {
     }
 
     private void logAndThrowNotFoundException(String value) {
-        log.error("Exception", new NotFoundException(value, UserService.ERROR_USER_NOT_FOUND));
-        throw new NotFoundException(value, UserService.ERROR_USER_NOT_FOUND);
+        log.error("Exception", new NotFoundException(UserService.ERROR_USER_NOT_FOUND));
+        throw new NotFoundException(UserService.ERROR_USER_NOT_FOUND);
     }
 }

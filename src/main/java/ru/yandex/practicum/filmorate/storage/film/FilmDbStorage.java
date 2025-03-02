@@ -262,7 +262,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private void logAndThrowNotFoundException(String value, String message) {
-        log.error("Exception", new NotFoundException(value, message));
-        throw new NotFoundException(value, message);
+        log.error("Exception", new NotFoundException(message));
+        throw new NotFoundException(message);
     }
 }
