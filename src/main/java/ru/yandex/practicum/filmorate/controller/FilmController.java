@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,16 +12,12 @@ import ru.yandex.practicum.filmorate.service.FilmInterface;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final String DEFAULT_GENRE = "нет жанра";
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
@@ -51,15 +46,13 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmRequest create(@Valid @RequestBody ObjectNode objectNode) {
-        Buffer buffer = parseObjectNodeToBuffer(objectNode);
-        return filmStorage.create(buffer);
+    public FilmRequest create(@Valid @RequestBody Buffer filmRequest) {
+        return filmStorage.create(filmRequest);
     }
 
     @PutMapping
-    public FilmRequest update(@Valid @RequestBody ObjectNode objectNode) {
-        Buffer buffer = parseObjectNodeToBuffer(objectNode);
-        return filmStorage.update(buffer);
+    public FilmRequest update(@Valid @RequestBody Buffer filmRequest) {
+        return filmStorage.update(filmRequest);
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -75,45 +68,5 @@ public class FilmController {
     @GetMapping("/popular")
     public LinkedHashSet<FilmRequest> viewRating(@RequestParam(required = false) Long count) {
         return filmInterface.viewRating(count);
-    }
-
-    /**
-     * преобразует json объект в объект Buffer
-     *
-     * @param objectNode json объект
-     * @return объект Buffer
-     */
-    private Buffer parseObjectNodeToBuffer(ObjectNode objectNode) {
-        Long id = objectNode.has("id") ? objectNode.get("id").asLong() : 0L;
-        String name = objectNode.get("name").asText();
-        String description = objectNode.get("description").asText();
-        String releaseDate = objectNode.get("releaseDate").asText();
-        Integer duration = objectNode.get("duration").asInt();
-        List<String> mpa = objectNode.get("mpa").findValuesAsText("id");
-        List<String> genres = extractGenresFromObjectNode(objectNode);
-
-        return Buffer.of(
-                id,
-                name,
-                description,
-                LocalDate.parse(releaseDate, DATE_FORMATTER),
-                duration,
-                genres,
-                Long.valueOf(mpa.get(0))
-        );
-    }
-
-    /**
-     * извлекает список жанров из json объекта
-     *
-     * @param objectNode json объект
-     * @return список жанров
-     */
-    private List<String> extractGenresFromObjectNode(ObjectNode objectNode) {
-        try {
-            return objectNode.get("genres").findValuesAsText("id");
-        } catch (NullPointerException e) {
-            return List.of(DEFAULT_GENRE);
-        }
     }
 }
