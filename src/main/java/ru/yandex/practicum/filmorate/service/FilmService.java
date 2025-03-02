@@ -32,10 +32,6 @@ public class FilmService implements FilmInterface {
     private final String selectFilmGenresQuery = "select filmId, genreId from filmGenre where filmId = ?";
     private final String deleteLikeQuery = "delete from likedUsers where filmId = ? and userId = ?";
     private final String selectTopFilmsQuery = "select f.id as name, COUNT(l.userId) as coun from likedUsers as l LEFT OUTER JOIN film AS f ON l.filmId = f.id GROUP BY f.name ORDER BY COUNT(l.userId) DESC LIMIT 10";
-    private final String selectAllGenresQuery = "select id, name from genre";
-    private final String selectGenreByIdQuery = "select id, name from genre where id = ?";
-    private final String selectAllRatingsQuery = "select id, rating from filmrating";
-    private final String selectRatingByIdQuery = "select id, rating from filmrating where id = ?";
 
 
     @Override

@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,17 +74,21 @@ public class UserService implements UserInterface {
         validateUserExists(idUser);
         validateUserExists(idFriend);
 
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new UserDbStorage.FriendsExtractor());
-        Set<Long> userFriends = friends.getOrDefault(idUser, new HashSet<>());
-        Set<Long> friendFriends = friends.getOrDefault(idFriend, new HashSet<>());
+        // SQL-запрос для поиска общих друзей
+        String sql = "SELECT f1.friend_id " +
+                "FROM friends f1 " +
+                "INNER JOIN friends f2 ON f1.friend_id = f2.friend_id " +
+                "WHERE f1.user_id = ? AND f2.user_id = ?";
 
-        Set<Long> jointFriends = new HashSet<>(userFriends);
-        jointFriends.retainAll(friendFriends);
+        // Выполняем запрос и получаем список ID общих друзей
+        List<Long> jointFriendIds = jdbcTemplate.queryForList(sql, Long.class, idUser, idFriend);
 
+        // Преобразуем список ID в Set<User>
         Set<User> result = new HashSet<>();
-        for (Long friendId : jointFriends) {
+        for (Long friendId : jointFriendIds) {
             result.add(userStorage.findById(friendId));
         }
+
         return result;
     }
 
