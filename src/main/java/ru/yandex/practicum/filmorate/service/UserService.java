@@ -73,13 +73,13 @@ public class UserService implements UserInterface {
         validateUserExists(idUser);
         validateUserExists(idFriend);
 
-        String SQL_SELECT_JOINT_FRIENDS = "SELECT f1.friendId AS jointFriendId " +
+        String sqlSelectJointFriends = "SELECT f1.friendId AS jointFriendId " +
                 "FROM friends f1 " +
                 "JOIN friends f2 ON f1.friendId = f2.friendId " +
                 "WHERE f1.userId = ? AND f2.userId = ?";
 
         Set<Long> jointFriendIds = new HashSet<>(jdbcTemplate.queryForList(
-                SQL_SELECT_JOINT_FRIENDS, Long.class, idUser, idFriend));
+                sqlSelectJointFriends, Long.class, idUser, idFriend));
 
         Set<User> result = new HashSet<>();
         for (Long friendId : jointFriendIds) {
