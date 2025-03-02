@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -103,21 +104,44 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> findAll() {
         log.info(LOG_GET_REQUEST);
-        String sqlQuery1 = "select id, name, description, releaseDate, duration from film";
-        List<Film> films = jdbcTemplate.query(sqlQuery1, this::mapRowToFilm);
-        String sqlQuery2 = "select filmId, userId from likedUsers";
-        Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(sqlQuery2, new LikedUsersExtractor());
-        String sqlQuery3 = "select filmId, genreId from filmGenre";
-        Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery3, new FilmGenreExtractor());
-        String sqlQuery4 = "select id, ratingId from film";
-        Map<Long, Long> filmRating = jdbcTemplate.query(sqlQuery4, new FilmRatingExtractor());
-        for (Film film : films) {
-            film.setLikedUsers(likedUsers.get(film.getId()));
-            film.setGenres(filmGenre.get(film.getId()));
-            film.setMpa(filmRating.get(film.getId()));
-        }
+        String sqlQuery = """
+                    SELECT f.id, f.name, f.description, f.releaseDate, f.duration,
+                           GROUP_CONCAT(DISTINCT fg.genreId) AS genreIds,
+                           GROUP_CONCAT(DISTINCT lu.userId) AS likedUserIds,
+                           f.ratingId
+                    FROM film f
+                    LEFT JOIN filmGenre fg ON f.id = fg.filmId
+                    LEFT JOIN likedUsers lu ON f.id = lu.filmId
+                    GROUP BY f.id
+                """;
+
+        List<Film> films = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> {
+            Film film = mapRowToFilm(rs, rowNum);
+
+            String genreIds = rs.getString("genreIds");
+            if (genreIds != null) {
+                LinkedHashSet<Long> genres = Arrays.stream(genreIds.split(","))
+                        .map(Long::parseLong)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+                film.setGenres(genres);
+            }
+
+            String likedUserIds = rs.getString("likedUserIds");
+            if (likedUserIds != null) {
+                Set<Long> likedUsers = Arrays.stream(likedUserIds.split(","))
+                        .map(Long::parseLong)
+                        .collect(Collectors.toSet());
+                film.setLikedUsers(likedUsers);
+            }
+
+            film.setMpa(rs.getLong("ratingId"));
+
+            return film;
+        });
+
         return films;
     }
+
 
     @Override
     public FilmResponse findById(Long id) {
