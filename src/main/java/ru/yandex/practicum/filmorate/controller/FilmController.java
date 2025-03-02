@@ -73,7 +73,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public LinkedHashSet<FilmResponse> viewRating(@RequestParam(required = false) Long count) {
+    public LinkedHashSet<FilmResponse> viewRating(@RequestParam(defaultValue = "10") Long count) {
         return filmInterface.viewRating(count);
     }
 
