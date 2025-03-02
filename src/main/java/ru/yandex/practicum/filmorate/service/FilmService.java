@@ -80,9 +80,15 @@ public class FilmService implements FilmInterface {
 
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
+
+        if (count == null || count <= 0) {
+            count = 10L;
+        }
+
+        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor(), count);
+
         LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
-        if (likedUsers == null) {
+        if (likedUsers == null || likedUsers.isEmpty()) {
             log.error("Список фильмов с рейтингом пуст.");
             throw new NotFoundException("Список фильмов с рейтингом пуст.");
         } else {
@@ -93,7 +99,16 @@ public class FilmService implements FilmInterface {
                     for (Long g : filmGenre.get(filmStorage.findById(l).getId()))
                         genres.add(g);
                 }
-                films.add(FilmResponse.of(filmStorage.findById(l).getId(), filmStorage.findById(l).getName(), filmStorage.findById(l).getDescription(), filmStorage.findById(l).getReleaseDate(), filmStorage.findById(l).getDuration(), new HashSet<>(), filmStorage.findById(l).getMpa(), genres));
+                films.add(FilmResponse.of(
+                        filmStorage.findById(l).getId(),
+                        filmStorage.findById(l).getName(),
+                        filmStorage.findById(l).getDescription(),
+                        filmStorage.findById(l).getReleaseDate(),
+                        filmStorage.findById(l).getDuration(),
+                        new HashSet<>(),
+                        filmStorage.findById(l).getMpa(),
+                        genres
+                ));
             }
         }
         return films;
