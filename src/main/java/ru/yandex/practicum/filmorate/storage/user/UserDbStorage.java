@@ -30,11 +30,12 @@ public class UserDbStorage implements UserStorage {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final JdbcTemplate jdbcTemplate;
 
-    private final String SELECT_ALL_USERS = "SELECT id, name, email, login, birthday FROM users";
-    private final String SELECT_ALL_FRIENDSHIPS = "SELECT userId, friendId FROM friends";
-    private final String SELECT_USER_BY_ID = "SELECT id, name, email, login, birthday FROM users WHERE id = ?";
-    private final String SELECT_ALL_EMAILS = "SELECT email FROM users";
-    private final String UPDATE_USER = "UPDATE users SET name = ?, email = ?, login = ?, birthday = ? WHERE id = ?";
+    // Переименованные запросы в camelCase
+    private final String selectAllUsers = "SELECT id, name, email, login, birthday FROM users";
+    private final String selectAllFriendships = "SELECT userId, friendId FROM friends";
+    private final String selectUserById = "SELECT id, name, email, login, birthday FROM users WHERE id = ?";
+    private final String selectAllEmails = "SELECT email FROM users";
+    private final String updateUser = "UPDATE users SET name = ?, email = ?, login = ?, birthday = ? WHERE id = ?";
 
     private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
         return User.builder()
@@ -77,8 +78,8 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Collection<User> findAll() {
         log.info("Обработка Get-запроса...");
-        Collection<User> users = jdbcTemplate.query(SELECT_ALL_USERS, this::mapRowToUser);
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(SELECT_ALL_FRIENDSHIPS, new FriendsExtractor());
+        Collection<User> users = jdbcTemplate.query(selectAllUsers, this::mapRowToUser);
+        Map<Long, Set<Long>> friends = jdbcTemplate.query(selectAllFriendships, new FriendsExtractor());
         for (User user : users) {
             user.setFriends(friends.get(user.getId()));
         }
@@ -90,13 +91,13 @@ public class UserDbStorage implements UserStorage {
         log.info("Обработка Get-запроса...");
         if (id != 0 && id != null) {
             try {
-                jdbcTemplate.queryForObject(SELECT_USER_BY_ID, this::mapRowToUser, id);
+                jdbcTemplate.queryForObject(selectUserById, this::mapRowToUser, id);
             } catch (DataAccessException e) {
                 log.error("Exception", new NotFoundException("Пользователь с данным идентификатором отсутствует в базе"));
                 throw new NotFoundException("Пользователь с данным идентификатором отсутствует в базе");
             }
-            User user = jdbcTemplate.queryForObject(SELECT_USER_BY_ID, this::mapRowToUser, id);
-            Map<Long, Set<Long>> friends = jdbcTemplate.query(SELECT_ALL_FRIENDSHIPS, new FriendsExtractor());
+            User user = jdbcTemplate.queryForObject(selectUserById, this::mapRowToUser, id);
+            Map<Long, Set<Long>> friends = jdbcTemplate.query(selectAllFriendships, new FriendsExtractor());
             user.setFriends(friends.get(id));
             return user;
         } else {
@@ -144,7 +145,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     private void duplicateCheck(User user) {
-        Set<String> emails = jdbcTemplate.query(SELECT_ALL_EMAILS, new EmailExtractor());
+        Set<String> emails = jdbcTemplate.query(selectAllEmails, new EmailExtractor());
         if (emails.contains(user.getEmail())) {
             log.error("Exception", new DuplicatedDataException("Этот имейл уже используется"));
             throw new DuplicatedDataException("Этот имейл уже используется");
@@ -155,31 +156,38 @@ public class UserDbStorage implements UserStorage {
     public User update(@Valid User newUser) {
         log.info("Обработка Update-запроса...");
 
+        // Проверка на наличие ID
         if (newUser.getId() == null) {
             throw new ValidationException("Id должен быть указан");
         }
 
+        // Поиск существующего пользователя
         User oldUser = findById(newUser.getId());
         if (oldUser == null) {
             throw new NotFoundException("Пользователь с указанным id не найден");
         }
 
+        // Проверка email
         if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")) {
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
 
+        // Проверка на дубликат email
         if (!newUser.getEmail().equals(oldUser.getEmail())) {
             duplicateCheck(newUser);
         }
 
+        // Проверка логина
         if (newUser.getLogin() == null || newUser.getLogin().isBlank() || newUser.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
 
+        // Проверка имени
         if (newUser.getName() == null || newUser.getName().isBlank()) {
             newUser.setName(newUser.getLogin());
         }
 
+        // Проверка даты рождения
         if (newUser.getBirthday() == null) {
             throw new ValidationException("Дата рождения не может быть нулевой");
         }
@@ -187,7 +195,8 @@ public class UserDbStorage implements UserStorage {
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
 
-        jdbcTemplate.update(UPDATE_USER,
+        // Обновление пользователя
+        jdbcTemplate.update(updateUser,
                 newUser.getName(),
                 newUser.getEmail(),
                 newUser.getLogin(),
