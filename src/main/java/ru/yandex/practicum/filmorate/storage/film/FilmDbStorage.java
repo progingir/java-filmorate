@@ -15,6 +15,8 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.GenreExtractor;
+import ru.yandex.practicum.filmorate.service.RatingNameExtractor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -152,8 +154,8 @@ public class FilmDbStorage implements FilmStorage {
         film.setLikedUsers(likedUsers.get(id));
         assert filmGenre != null;
         film.setGenres(filmGenre.get(id));
-        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new FilmService.GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new FilmService.RatingNameExtractor());
+        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
+        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
         LinkedHashSet<Genre> genres = new LinkedHashSet<>();
         if (!filmGenre.isEmpty()) {
             for (Long g : filmGenre.get(id)) {
@@ -175,8 +177,8 @@ public class FilmDbStorage implements FilmStorage {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("film").usingGeneratedKeyColumns("id");
         Long filmId = simpleJdbcInsert.executeAndReturnKey(buffer.toMapBuffer()).longValue();
 
-        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new FilmService.GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new FilmService.RatingNameExtractor());
+        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
+        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
 
         LinkedHashSet<Genre> genres = processGenres(buffer.getGenres(), filmId, genre);
         updateFilmRating(buffer.getMpa(), filmId);
@@ -199,8 +201,8 @@ public class FilmDbStorage implements FilmStorage {
         oldFilm.setReleaseDate(newFilm.getReleaseDate());
         oldFilm.setDuration(newFilm.getDuration());
 
-        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new FilmService.GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new FilmService.RatingNameExtractor());
+        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
+        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
 
         LinkedHashSet<Genre> genres = processGenres(newFilm.getGenres(), oldFilm.getId(), genre);
         updateFilmRating(newFilm.getMpa(), oldFilm.getId());

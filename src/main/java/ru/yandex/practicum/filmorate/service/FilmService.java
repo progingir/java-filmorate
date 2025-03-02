@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -14,8 +13,6 @@ import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 
 @Service
@@ -40,18 +37,6 @@ public class FilmService implements FilmInterface {
     private final String selectAllRatingsQuery = "select id, rating from filmrating";
     private final String selectRatingByIdQuery = "select id, rating from filmrating where id = ?";
 
-    public static class TopLikedUsersExtractor implements ResultSetExtractor<LinkedHashMap<Long, Long>> {
-        @Override
-        public LinkedHashMap<Long, Long> extractData(ResultSet rs) throws SQLException {
-            LinkedHashMap<Long, Long> data = new LinkedHashMap<>();
-            while (rs.next()) {
-                Long filmId = rs.getLong("name");
-                Long likes = rs.getLong("coun");
-                data.putIfAbsent(filmId, likes);
-            }
-            return data;
-        }
-    }
 
     @Override
     public FilmRequest addLike(Long idUser, Long idFilm) {
@@ -129,19 +114,6 @@ public class FilmService implements FilmInterface {
         return genreConstant;
     }
 
-    public static class GenreExtractor implements ResultSetExtractor<Map<Long, String>> {
-        @Override
-        public Map<Long, String> extractData(ResultSet rs) throws SQLException {
-            Map<Long, String> data = new LinkedHashMap<>();
-            while (rs.next()) {
-                Long id = rs.getLong("id");
-                String name = rs.getString("name");
-                data.put(id, name);
-            }
-            return data;
-        }
-    }
-
     public GenreConstant viewGenreName(Long id) {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(selectGenreByIdQuery, new GenreExtractor(), id);
@@ -158,19 +130,6 @@ public class FilmService implements FilmInterface {
         for (Long l : genre.keySet())
             mpaConstant.add(Mpa.of(l, genre.get(l)));
         return mpaConstant;
-    }
-
-    public static class RatingNameExtractor implements ResultSetExtractor<Map<Long, String>> {
-        @Override
-        public Map<Long, String> extractData(ResultSet rs) throws SQLException {
-            Map<Long, String> data = new HashMap<>();
-            while (rs.next()) {
-                Long id = rs.getLong("id");
-                String rating = rs.getString("rating");
-                data.put(id, rating);
-            }
-            return data;
-        }
     }
 
     public Mpa viewRatingName(Long id) {
