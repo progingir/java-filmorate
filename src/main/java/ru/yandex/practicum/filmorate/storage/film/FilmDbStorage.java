@@ -150,17 +150,17 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         String sqlQuery = """
-                    SELECT f.id, f.name, f.description, f.releaseDate, f.duration, 
-                           GROUP_CONCAT(DISTINCT g.id) AS genreIds, 
-                           GROUP_CONCAT(DISTINCT u.userId) AS likedUserIds, 
-                           f.ratingId 
+                    SELECT f.id, f.name, f.description, f.releaseDate, f.duration,\s
+                           GROUP_CONCAT(DISTINCT g.id) AS genreIds,\s
+                           GROUP_CONCAT(DISTINCT u.userId) AS likedUserIds,\s
+                           f.ratingId\s
                     FROM film f
                     LEFT JOIN filmGenre fg ON f.id = fg.filmId
                     LEFT JOIN genres g ON fg.genreId = g.id
                     LEFT JOIN likedUsers u ON f.id = u.filmId
                     WHERE f.id = ?
                     GROUP BY f.id
-                """;
+               \s""";
 
         Film film;
         try {
