@@ -3,10 +3,10 @@ package ru.yandex.practicum.filmorate.storage.user;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
@@ -23,7 +23,7 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j(topic = "TRACE")
-@Component
+@Qualifier("UserDbStorage")
 public class UserDbStorage implements UserStorage {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
