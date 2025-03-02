@@ -49,32 +49,6 @@ public class UserDbStorage implements UserStorage {
                 .build();
     }
 
-    public static class FriendsExtractor implements ResultSetExtractor<Map<Long, Set<Long>>> {
-        @Override
-        public Map<Long, Set<Long>> extractData(ResultSet rs) throws SQLException {
-            Map<Long, Set<Long>> data = new LinkedHashMap<>();
-            while (rs.next()) {
-                Long userId = rs.getLong("userId");
-                data.putIfAbsent(userId, new HashSet<>());
-                Long friendId = rs.getLong("friendId");
-                data.get(userId).add(friendId);
-            }
-            return data;
-        }
-    }
-
-    public static class EmailExtractor implements ResultSetExtractor<Set<String>> {
-        @Override
-        public Set<String> extractData(ResultSet rs) throws SQLException {
-            Set<String> data = new HashSet<>();
-            while (rs.next()) {
-                String email = rs.getString("email");
-                data.add(email);
-            }
-            return data;
-        }
-    }
-
     @Override
     public Collection<User> findAll() {
         log.info("Обработка Get-запроса...");
@@ -156,38 +130,31 @@ public class UserDbStorage implements UserStorage {
     public User update(@Valid User newUser) {
         log.info("Обработка Update-запроса...");
 
-        // Проверка на наличие ID
         if (newUser.getId() == null) {
             throw new ValidationException("Id должен быть указан");
         }
 
-        // Поиск существующего пользователя
         User oldUser = findById(newUser.getId());
         if (oldUser == null) {
             throw new NotFoundException("Пользователь с указанным id не найден");
         }
 
-        // Проверка email
         if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")) {
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
 
-        // Проверка на дубликат email
         if (!newUser.getEmail().equals(oldUser.getEmail())) {
             duplicateCheck(newUser);
         }
 
-        // Проверка логина
         if (newUser.getLogin() == null || newUser.getLogin().isBlank() || newUser.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
 
-        // Проверка имени
         if (newUser.getName() == null || newUser.getName().isBlank()) {
             newUser.setName(newUser.getLogin());
         }
 
-        // Проверка даты рождения
         if (newUser.getBirthday() == null) {
             throw new ValidationException("Дата рождения не может быть нулевой");
         }
@@ -195,7 +162,6 @@ public class UserDbStorage implements UserStorage {
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
 
-        // Обновление пользователя
         jdbcTemplate.update(updateUser,
                 newUser.getName(),
                 newUser.getEmail(),

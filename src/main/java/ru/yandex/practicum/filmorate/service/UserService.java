@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.FriendsExtractor;
 import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -73,7 +74,7 @@ public class UserService implements UserInterface {
         validateUserExists(idUser);
         validateUserExists(idFriend);
 
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new UserDbStorage.FriendsExtractor());
+        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new FriendsExtractor());
         Set<Long> userFriends = friends.getOrDefault(idUser, new HashSet<>());
         Set<Long> friendFriends = friends.getOrDefault(idFriend, new HashSet<>());
 
@@ -93,7 +94,7 @@ public class UserService implements UserInterface {
 
         validateUserExists(idUser);
 
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new UserDbStorage.FriendsExtractor());
+        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new FriendsExtractor());
         assert friends != null;
         Set<Long> userFriends = friends.getOrDefault(idUser, new HashSet<>());
 
@@ -111,7 +112,7 @@ public class UserService implements UserInterface {
     }
 
     private boolean isFriend(Long idUser, Long idFriend) {
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new UserDbStorage.FriendsExtractor());
+        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new FriendsExtractor());
         assert friends != null;
         return friends.getOrDefault(idUser, new HashSet<>()).contains(idFriend);
     }
