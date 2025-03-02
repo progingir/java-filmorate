@@ -239,8 +239,9 @@ public class FilmDbStorage implements FilmStorage {
 
         for (String genreIdStr : genres) {
             Long genreId = Long.parseLong(genreIdStr);
-            logAndThrowNotFoundException(genreId.toString(), ERROR_INVALID_GENRE);
-
+            if (!(genreId > 0 && genreId < 7)) {
+                logAndThrowNotFoundException(genreId.toString(), ERROR_INVALID_GENRE);
+            }
             jdbcTemplate.update(SQL_INSERT_FILM_GENRE, filmId, genreId);
             result.add(Genre.of(genreId, genreMap.get(genreId)));
         }
