@@ -1,13 +1,13 @@
 package ru.yandex.practicum.filmorate.service;
 
-import ru.yandex.practicum.filmorate.model.FilmRequest;
+import ru.yandex.practicum.filmorate.model.FilmResponse;
 
 import java.util.LinkedHashSet;
 
 public interface FilmInterface {
-    FilmRequest addLike(Long idUser, Long idFilm);
+    FilmResponse addLike(Long idUser, Long idFilm);
 
-    FilmRequest delLike(Long idUser, Long idFilm);
+    FilmResponse delLike(Long idUser, Long idFilm);
 
-    LinkedHashSet<FilmRequest> viewRating(Long count);
+    LinkedHashSet<FilmResponse> viewRating(Long count);
 }

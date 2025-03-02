@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
         import ru.yandex.practicum.filmorate.model.Buffer;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmRequest;
+import ru.yandex.practicum.filmorate.model.FilmResponse;
 import ru.yandex.practicum.filmorate.service.FilmInterface;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -45,35 +45,35 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public FilmRequest findById(@PathVariable("id") Long id) {
+    public FilmResponse findById(@PathVariable("id") Long id) {
         return filmStorage.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmRequest create(@Valid @RequestBody ObjectNode objectNode) {
+    public FilmResponse create(@Valid @RequestBody ObjectNode objectNode) {
         Buffer buffer = parseObjectNodeToBuffer(objectNode);
         return filmStorage.create(buffer);
     }
 
     @PutMapping
-    public FilmRequest update(@Valid @RequestBody ObjectNode objectNode) {
+    public FilmResponse update(@Valid @RequestBody ObjectNode objectNode) {
         Buffer buffer = parseObjectNodeToBuffer(objectNode);
         return filmStorage.update(buffer);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public FilmRequest addLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+    public FilmResponse addLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
         return filmInterface.addLike(userId, id);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public FilmRequest delLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+    public FilmResponse delLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
         return filmInterface.delLike(userId, id);
     }
 
     @GetMapping("/popular")
-    public LinkedHashSet<FilmRequest> viewRating(@RequestParam(required = false) Long count) {
+    public LinkedHashSet<FilmResponse> viewRating(@RequestParam(required = false) Long count) {
         return filmInterface.viewRating(count);
     }
 

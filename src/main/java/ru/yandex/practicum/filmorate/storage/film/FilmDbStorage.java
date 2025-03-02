@@ -124,7 +124,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public FilmRequest findById(Long id) {
+    public FilmResponse findById(Long id) {
         log.info(LOG_GET_REQUEST);
         if (id == null || id == 0) {
             logAndThrowConditionsNotMetException(ERROR_NULL_ID);
@@ -161,11 +161,11 @@ public class FilmDbStorage implements FilmStorage {
 
         film.setMpa(filmRating.get(id));
 
-        return FilmRequest.of(film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), new HashSet<>(), Mpa.of(film.getMpa(), rating.get(film.getMpa())), genres);
+        return FilmResponse.of(film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), new HashSet<>(), Mpa.of(film.getMpa(), rating.get(film.getMpa())), genres);
     }
 
     @Override
-    public FilmRequest create(@Valid Buffer buffer) {
+    public FilmResponse create(@Valid Buffer buffer) {
         log.info(LOG_CREATE_REQUEST);
         validateBuffer(buffer);
 
@@ -178,17 +178,17 @@ public class FilmDbStorage implements FilmStorage {
         LinkedHashSet<Genre> genres = processGenres(buffer.getGenres(), filmId, genre);
         updateFilmRating(buffer.getMpa(), filmId);
 
-        return FilmRequest.of(filmId, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres);
+        return FilmResponse.of(filmId, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres);
     }
 
     @Override
-    public FilmRequest update(@Valid Buffer newFilm) {
+    public FilmResponse update(@Valid Buffer newFilm) {
         log.info(LOG_UPDATE_REQUEST);
         if (newFilm.getId() == null) {
             logAndThrowConditionsNotMetException("Id должен быть указан");
         }
 
-        FilmRequest oldFilm = findById(newFilm.getId());
+        FilmResponse oldFilm = findById(newFilm.getId());
         validateBuffer(newFilm);
 
         oldFilm.setName(newFilm.getName());
@@ -205,7 +205,7 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(SQL_UPDATE_FILM, oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(),
                 oldFilm.getDuration(), oldFilm.getMpa().getId(), oldFilm.getId());
 
-        return FilmRequest.of(oldFilm.getId(), oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(),
+        return FilmResponse.of(oldFilm.getId(), oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(),
                 oldFilm.getDuration(), new HashSet<>(), Mpa.of(newFilm.getMpa(), rating.get(newFilm.getMpa())), genres);
     }
 

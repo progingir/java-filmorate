@@ -2,7 +2,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import ru.yandex.practicum.filmorate.model.Buffer;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmRequest;
+import ru.yandex.practicum.filmorate.model.FilmResponse;
 
 import java.util.List;
 
@@ -10,9 +10,9 @@ public interface FilmStorage {
 
     List<Film> findAll();
 
-    FilmRequest findById(Long id);
+    FilmResponse findById(Long id);
 
-    FilmRequest create(Buffer film);
+    FilmResponse create(Buffer film);
 
-    FilmRequest update(Buffer newFilm);
+    FilmResponse update(Buffer newFilm);
 }

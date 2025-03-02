@@ -17,7 +17,7 @@ import java.util.*;
 @Builder
 @EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor(staticName = "of")
-public class FilmRequest {
+public class FilmResponse {
     private Long id;
     @NotNull
     @NotBlank
