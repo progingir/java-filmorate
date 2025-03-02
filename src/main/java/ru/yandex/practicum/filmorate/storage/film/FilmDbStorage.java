@@ -8,6 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -23,7 +24,7 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j(topic = "TRACE")
-@Qualifier("FilmDbStorage")
+@Component
 public class FilmDbStorage implements FilmStorage {
 
     //SQL-запросы
