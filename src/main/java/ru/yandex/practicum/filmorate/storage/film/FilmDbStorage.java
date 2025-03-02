@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -108,13 +107,13 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> findAll() {
         log.info(LOG_GET_REQUEST);
         String sqlQuery = """
-                SELECT f.id AS filmId, f.name, f.description, f.releaseDate, f.duration, 
-                       l.userId AS likedUserId, g.genreId, r.ratingId
-                FROM film f
-                LEFT JOIN likedUsers l ON f.id = l.filmId
-                LEFT JOIN filmGenre g ON f.id = g.filmId
-                LEFT JOIN filmrating r ON f.ratingId = r.id
-                """;
+                 SELECT f.id AS filmId, f.name, f.description, f.releaseDate, f.duration,\s
+                        l.userId AS likedUserId, g.genreId, r.ratingId
+                 FROM film f
+                 LEFT JOIN likedUsers l ON f.id = l.filmId
+                 LEFT JOIN filmGenre g ON f.id = g.filmId
+                 LEFT JOIN filmrating r ON f.ratingId = r.id
+                \s""";
 
         return jdbcTemplate.query(sqlQuery, rs -> {
             Map<Long, Film> films = new LinkedHashMap<>();
@@ -159,14 +158,14 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         String sqlQuery = """
-                SELECT f.id AS filmId, f.name, f.description, f.releaseDate, f.duration, 
-                       l.userId AS likedUserId, g.genreId, r.ratingId, r.rating
-                FROM film f
-                LEFT JOIN likedUsers l ON f.id = l.filmId
-                LEFT JOIN filmGenre g ON f.id = g.filmId
-                LEFT JOIN filmrating r ON f.ratingId = r.id
-                WHERE f.id = ?
-                """;
+                 SELECT f.id AS filmId, f.name, f.description, f.releaseDate, f.duration,\s
+                        l.userId AS likedUserId, g.genreId, r.ratingId, r.rating
+                 FROM film f
+                 LEFT JOIN likedUsers l ON f.id = l.filmId
+                 LEFT JOIN filmGenre g ON f.id = g.filmId
+                 LEFT JOIN filmrating r ON f.ratingId = r.id
+                 WHERE f.id = ?
+                \s""";
 
         return jdbcTemplate.query(sqlQuery, rs -> {
             FilmRequest filmRequest = null;
