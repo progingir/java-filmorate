@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -105,15 +104,15 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> findAll() {
         log.info(LOG_GET_REQUEST);
         String sqlQuery = """
-        SELECT f.id, f.name, f.description, f.releaseDate, f.duration,
-               GROUP_CONCAT(DISTINCT fg.genreId) AS genreIds,
-               GROUP_CONCAT(DISTINCT lu.userId) AS likedUserIds,
-               f.ratingId
-        FROM film f
-        LEFT JOIN filmGenre fg ON f.id = fg.filmId
-        LEFT JOIN likedUsers lu ON f.id = lu.filmId
-        GROUP BY f.id
-    """;
+                    SELECT f.id, f.name, f.description, f.releaseDate, f.duration,
+                           GROUP_CONCAT(DISTINCT fg.genreId) AS genreIds,
+                           GROUP_CONCAT(DISTINCT lu.userId) AS likedUserIds,
+                           f.ratingId
+                    FROM film f
+                    LEFT JOIN filmGenre fg ON f.id = fg.filmId
+                    LEFT JOIN likedUsers lu ON f.id = lu.filmId
+                    GROUP BY f.id
+                """;
 
         List<Film> films = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> {
             Film film = mapRowToFilm(rs, rowNum);
@@ -143,7 +142,6 @@ public class FilmDbStorage implements FilmStorage {
     }
 
 
-
     @Override
     public FilmResponse findById(Long id) {
         log.info(LOG_GET_REQUEST);
@@ -151,55 +149,69 @@ public class FilmDbStorage implements FilmStorage {
             logAndThrowConditionsNotMetException(ERROR_NULL_ID);
         }
 
-        String sqlQuery5 = "select id, name, description, releaseDate, duration from film where id = ?";
+        String sqlQuery = """
+                    SELECT f.id, f.name, f.description, f.releaseDate, f.duration, 
+                           GROUP_CONCAT(DISTINCT g.id) AS genreIds, 
+                           GROUP_CONCAT(DISTINCT u.userId) AS likedUserIds, 
+                           f.ratingId 
+                    FROM film f
+                    LEFT JOIN filmGenre fg ON f.id = fg.filmId
+                    LEFT JOIN genres g ON fg.genreId = g.id
+                    LEFT JOIN likedUsers u ON f.id = u.filmId
+                    WHERE f.id = ?
+                    GROUP BY f.id
+                """;
+
+        Film film;
         try {
-            jdbcTemplate.queryForObject(sqlQuery5, this::mapRowToFilm, id);
+            film = jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) -> {
+                Film f = mapRowToFilm(rs, rowNum); // Передаем rowNum
+
+                // Извлечение жанров
+                String[] genreIds = rs.getString("genreIds") != null ? rs.getString("genreIds").split(",") : new String[0];
+                LinkedHashSet<Long> genres = new LinkedHashSet<>();
+                for (String genreId : genreIds) {
+                    genres.add(Long.valueOf(genreId));
+                }
+                f.setGenres(genres);
+
+                // Извлечение пользователей, которые лайкнули фильм
+                String[] likedUserIds = rs.getString("likedUserIds") != null ? rs.getString("likedUserIds").split(",") : new String[0];
+                Set<Long> likedUsers = new HashSet<>();
+                for (String userId : likedUserIds) {
+                    likedUsers.add(Long.valueOf(userId));
+                }
+                f.setLikedUsers(likedUsers);
+
+                // Установка рейтинга
+                f.setMpa(rs.getLong("ratingId"));
+
+                return f;
+            }, id);
         } catch (DataAccessException e) {
-
             logAndThrowNotFoundException(id.toString(), ERROR_FILM_NOT_FOUND);
+            return null; // или выбросить исключение, если это необходимо
         }
 
-        Film film = jdbcTemplate.queryForObject(sqlQuery5, this::mapRowToFilm, id);
-        String sqlQuery6 = "select filmId, userId from likedUsers where filmId = ?";
-        Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(sqlQuery6, new LikedUsersExtractor(), id);
-        String sqlQuery7 = "select filmId, genreId from filmGenre where filmId = ?";
-        Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery7, new FilmGenreExtractor(), id);
-        String sqlQuery8 = "select id, ratingId from film where id = ?";
-        Map<Long, Long> filmRating = jdbcTemplate.query(sqlQuery8, new FilmRatingExtractor(), id);
+        Map<Long, String> genreMap = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
+        Map<Long, String> ratingMap = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
 
-
-        film.setLikedUsers(likedUsers.get(id));
-
-        film.setGenres(filmGenre.get(id));
-        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
-        LinkedHashSet<Genre> genres = new LinkedHashSet<>();
-        if (!filmGenre.isEmpty()) {
-            for (Long g : filmGenre.get(id)) {
-                genres.add(Genre.of(g, genre.get(g)));
-            }
+        // Устанавливаем названия жанров
+        LinkedHashSet<Genre> genreObjects = new LinkedHashSet<>();
+        for (Long genreId : film.getGenres()) {
+            genreObjects.add(Genre.of(genreId, genreMap.get(genreId)));
         }
 
-        film.setMpa(filmRating.get(id));
-
-        return FilmResponse.of(film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), new HashSet<>(), Mpa.of(film.getMpa(), rating.get(film.getMpa())), genres);
+        // Возвращаем FilmResponse с двумя параметрами
+        return FilmResponse.of(film.getId(), film.getName(), film.getDescription(),
+                film.getReleaseDate(), film.getDuration(),
+                new HashSet<>(), Mpa.of(film.getMpa(), ratingMap.get(film.getMpa())),
+                genreObjects);
     }
 
     @Override
-    public FilmResponse create(@Valid Buffer buffer) {
-        log.info(LOG_CREATE_REQUEST);
-        validateBuffer(buffer);
-
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("film").usingGeneratedKeyColumns("id");
-        Long filmId = simpleJdbcInsert.executeAndReturnKey(buffer.toMapBuffer()).longValue();
-
-        Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
-        Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
-
-        LinkedHashSet<Genre> genres = processGenres(buffer.getGenres(), filmId, genre);
-        updateFilmRating(buffer.getMpa(), filmId);
-
-        return FilmResponse.of(filmId, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres);
+    public FilmResponse create(Buffer film) {
+        return null;
     }
 
     @Override
