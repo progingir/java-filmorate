@@ -150,12 +150,12 @@ public class FilmService implements FilmInterface {
         } else return GenreConstant.of(id, genre.get(id));
     }
 
-    public List<MpaConstant> viewFilmsRating() {
+    public List<Mpa> viewFilmsRating() {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(sqlQuery8, new RatingNameExtractor());
-        List<MpaConstant> mpaConstant = new ArrayList<>();
+        List<Mpa> mpaConstant = new ArrayList<>();
         for (Long l : genre.keySet())
-            mpaConstant.add(MpaConstant.of(l, genre.get(l)));
+            mpaConstant.add(Mpa.of(l, genre.get(l)));
         return mpaConstant;
     }
 
@@ -172,12 +172,12 @@ public class FilmService implements FilmInterface {
         }
     }
 
-    public MpaConstant viewRatingName(Long id) {
+    public Mpa viewRatingName(Long id) {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new RatingNameExtractor(), id);
         if (id < 0 || id > 6) {
             log.error("Exception", new NotFoundException("NULL", "Рейтинг с указанным идентификатором не существует."));
             throw new NotFoundException("NULL", "Рейтинг с указанным идентификатором не существует.");
-        } else return MpaConstant.of(id, genre.get(id));
+        } else return Mpa.of(id, genre.get(id));
     }
 }
