@@ -53,7 +53,7 @@ public class FilmService implements FilmInterface {
     }
 
     @Override
-    public FilmRequest addLike(Long idUser, Long idFilm) throws ConditionsNotMetException {
+    public FilmRequest addLike(Long idUser, Long idFilm) {
         log.info("Обработка Post-запроса...");
         if (userStorage.findById(idUser) != null && filmStorage.findById(idFilm) != null) {
             Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(sqlQuery1, new FilmDbStorage.LikedUsersExtractor());
@@ -75,7 +75,7 @@ public class FilmService implements FilmInterface {
     }
 
     @Override
-    public FilmRequest delLike(Long idUser, Long idFilm) throws ConditionsNotMetException {
+    public FilmRequest delLike(Long idUser, Long idFilm) {
         log.info("Обработка Del-запроса...");
         if (userStorage.findById(idUser) != null && filmStorage.findById(idFilm) != null) {
             Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(sqlQuery1, new FilmDbStorage.LikedUsersExtractor());
@@ -98,7 +98,7 @@ public class FilmService implements FilmInterface {
         return List.of();
     }
 
-    public LinkedHashSet<FilmRequest> viewRating(Long count) throws NotFoundException {
+    public LinkedHashSet<FilmRequest> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
         LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(sqlQuery5, new TopLikedUsersExtractor());
         LinkedHashSet<FilmRequest> films = new LinkedHashSet<>();
@@ -119,7 +119,7 @@ public class FilmService implements FilmInterface {
         return films;
     }
 
-    public List<GenreConstant> viewGenre() throws NotFoundException {
+    public List<GenreConstant> viewGenre() {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(sqlQuery6, new GenreExtractor());
         List<GenreConstant> genreConstant = new ArrayList<>();
@@ -141,7 +141,7 @@ public class FilmService implements FilmInterface {
         }
     }
 
-    public GenreConstant viewGenreName(Long id) throws NotFoundException {
+    public GenreConstant viewGenreName(Long id) {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(sqlQuery7, new GenreExtractor(), id);
         if (id < 0 || id > 7) {
@@ -150,7 +150,7 @@ public class FilmService implements FilmInterface {
         } else return GenreConstant.of(id, genre.get(id));
     }
 
-    public List<MpaConstant> viewFilmsRating() throws NotFoundException {
+    public List<MpaConstant> viewFilmsRating() {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(sqlQuery8, new RatingNameExtractor());
         List<MpaConstant> mpaConstant = new ArrayList<>();
@@ -172,7 +172,7 @@ public class FilmService implements FilmInterface {
         }
     }
 
-    public MpaConstant viewRatingName(Long id) throws NotFoundException {
+    public MpaConstant viewRatingName(Long id) {
         log.info("Обработка Get-запроса...");
         Map<Long, String> genre = jdbcTemplate.query(sqlQuery9, new RatingNameExtractor(), id);
         if (id < 0 || id > 6) {

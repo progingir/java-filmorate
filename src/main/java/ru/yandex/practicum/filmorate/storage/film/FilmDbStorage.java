@@ -126,7 +126,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public FilmRequest findById(Long id) throws ConditionsNotMetException, NotFoundException {
+    public FilmRequest findById(Long id) {
         log.info(LOG_GET_REQUEST);
         if (id == null || id == 0) {
             logAndThrowConditionsNotMetException(ERROR_NULL_ID);
@@ -168,7 +168,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public FilmRequest create(@Valid Buffer buffer) throws ConditionsNotMetException, NullPointerException {
+    public FilmRequest create(@Valid Buffer buffer) {
         log.info(LOG_CREATE_REQUEST);
         validateBuffer(buffer);
 
@@ -185,7 +185,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public FilmRequest update(@Valid Buffer newFilm) throws ConditionsNotMetException, NotFoundException {
+    public FilmRequest update(@Valid Buffer newFilm) {
         log.info(LOG_UPDATE_REQUEST);
         if (newFilm.getId() == null) {
             logAndThrowConditionsNotMetException("Id должен быть указан");
@@ -213,7 +213,7 @@ public class FilmDbStorage implements FilmStorage {
                 oldFilm.getDuration(), new HashSet<>(), Mpa.of(newFilm.getMpa(), rating.get(newFilm.getMpa())), genres);
     }
 
-    private void validateBuffer(Buffer buffer) throws ConditionsNotMetException, NullPointerException {
+    private void validateBuffer(Buffer buffer) {
         if (buffer.getName() == null || buffer.getName().isBlank()) {
             logAndThrowConditionsNotMetException(ERROR_EMPTY_NAME);
         }
@@ -256,12 +256,12 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(SQL_UPDATE_FILM_RATING, mpaId, filmId);
     }
 
-    private void logAndThrowConditionsNotMetException(String message) throws ConditionsNotMetException {
+    private void logAndThrowConditionsNotMetException(String message) {
         log.error("Exception", new ConditionsNotMetException(message));
         throw new ConditionsNotMetException(message);
     }
 
-    private void logAndThrowNotFoundException(String value, String message) throws NotFoundException {
+    private void logAndThrowNotFoundException(String value, String message) {
         log.error("Exception", new NotFoundException(value, message));
         throw new NotFoundException(value, message);
     }

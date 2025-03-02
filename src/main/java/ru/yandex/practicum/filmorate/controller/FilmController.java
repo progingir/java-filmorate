@@ -47,35 +47,35 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public FilmRequest findById(@PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException {
+    public FilmRequest findById(@PathVariable("id") Long id) {
         return filmStorage.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmRequest create(@Valid @RequestBody ObjectNode objectNode) throws ConditionsNotMetException, NullPointerException {
+    public FilmRequest create(@Valid @RequestBody ObjectNode objectNode) {
         Buffer buffer = parseObjectNodeToBuffer(objectNode);
         return filmStorage.create(buffer);
     }
 
     @PutMapping
-    public FilmRequest update(@Valid @RequestBody ObjectNode objectNode) throws ConditionsNotMetException, NotFoundException {
+    public FilmRequest update(@Valid @RequestBody ObjectNode objectNode) {
         Buffer buffer = parseObjectNodeToBuffer(objectNode);
         return filmStorage.update(buffer);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public FilmRequest addLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) throws ConditionsNotMetException {
+    public FilmRequest addLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
         return filmInterface.addLike(userId, id);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public FilmRequest delLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) throws NotFoundException {
+    public FilmRequest delLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
         return filmInterface.delLike(userId, id);
     }
 
     @GetMapping("/popular")
-    public LinkedHashSet<FilmRequest> viewRating(@RequestParam(required = false) Long count) throws NotFoundException {
+    public LinkedHashSet<FilmRequest> viewRating(@RequestParam(required = false) Long count) {
         return filmInterface.viewRating(count);
     }
 

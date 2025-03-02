@@ -80,7 +80,7 @@ public class UserDbStorage implements UserStorage {
         return users;
     }
 
-    public User findById(Long id) throws ConditionsNotMetException {
+    public User findById(Long id) {
         log.info("Обработка Get-запроса...");
         if (id != 0 && !id.equals(null)) {
             try {
@@ -101,7 +101,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public Collection<User> getFriends(Long id) throws NotFoundException {
+    public Collection<User> getFriends(Long id) {
         return List.of();
     }
 
@@ -152,7 +152,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public User update(@Valid User newUser) throws NotFoundException, DuplicatedDataException, ValidationException {
+    public User update(@Valid User newUser) throws DuplicatedDataException, ValidationException {
         log.info("Обработка Update-запроса...");
 
         // Проверка на наличие ID

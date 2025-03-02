@@ -47,7 +47,7 @@ public class UserController {
      * @throws ConditionsNotMetException если идентификатор пользователя некорректен
      */
     @GetMapping(USER_ID_PATH)
-    public User findById(@PathVariable("id") Long id) throws ConditionsNotMetException {
+    public User findById(@PathVariable("id") Long id) {
         return userStorage.findById(id);
     }
 
@@ -61,7 +61,7 @@ public class UserController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User create(@Valid @RequestBody User user) throws ConditionsNotMetException, DuplicatedDataException {
+    public User create(@Valid @RequestBody User user) {
         return userStorage.create(user);
     }
 
@@ -75,7 +75,7 @@ public class UserController {
      * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @PutMapping
-    public User update(@Valid @RequestBody User newUser) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public User update(@Valid @RequestBody User newUser) {
         return userStorage.update(newUser);
     }
 
@@ -90,7 +90,7 @@ public class UserController {
      * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @PutMapping(FRIEND_ID_PATH)
-    public User addFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public User addFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
         return userInterface.addFriend(id, friendId);
     }
 
@@ -105,7 +105,7 @@ public class UserController {
      * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @DeleteMapping(FRIEND_ID_PATH)
-    public User delFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public User delFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
         return userInterface.delFriend(id, friendId);
     }
 
@@ -120,7 +120,7 @@ public class UserController {
      * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @GetMapping(COMMON_FRIENDS_PATH)
-    public Set<User> findJointFriends(@Valid @PathVariable("id") Long id, @PathVariable("otherId") Long otherId) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public Set<User> findJointFriends(@Valid @PathVariable("id") Long id, @PathVariable("otherId") Long otherId) {
         return userInterface.findJointFriends(id, otherId);
     }
 
@@ -134,7 +134,7 @@ public class UserController {
      * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @GetMapping(FRIENDS_PATH)
-    public Set<User> findAllFriends(@Valid @PathVariable("id") Long id) throws ConditionsNotMetException, NotFoundException, DuplicatedDataException {
+    public Set<User> findAllFriends(@Valid @PathVariable("id") Long id) {
         return userInterface.findAllFriends(id);
     }
 }

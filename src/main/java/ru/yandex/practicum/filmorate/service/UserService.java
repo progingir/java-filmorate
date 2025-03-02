@@ -41,7 +41,7 @@ public class UserService implements UserInterface {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public User addFriend(Long idUser, Long idFriend) throws ConditionsNotMetException, NotFoundException {
+    public User addFriend(Long idUser, Long idFriend) {
         log.info(LOG_POST_REQUEST);
 
         validateUserExists(idUser);
@@ -56,7 +56,7 @@ public class UserService implements UserInterface {
     }
 
     @Override
-    public User delFriend(Long idUser, Long idFriend) throws NotFoundException {
+    public User delFriend(Long idUser, Long idFriend) {
         log.info(LOG_DELETE_REQUEST);
 
         validateUserExists(idUser);
@@ -67,7 +67,7 @@ public class UserService implements UserInterface {
     }
 
     @Override
-    public Set<User> findJointFriends(Long idUser, Long idFriend) throws NotFoundException {
+    public Set<User> findJointFriends(Long idUser, Long idFriend) {
         log.info(LOG_GET_REQUEST);
 
         validateUserExists(idUser);
@@ -88,7 +88,7 @@ public class UserService implements UserInterface {
     }
 
     @Override
-    public Set<User> findAllFriends(Long idUser) throws NotFoundException {
+    public Set<User> findAllFriends(Long idUser) {
         log.info(LOG_GET_REQUEST);
 
         validateUserExists(idUser);
@@ -104,7 +104,7 @@ public class UserService implements UserInterface {
         return result;
     }
 
-    private void validateUserExists(Long userId) throws NotFoundException {
+    private void validateUserExists(Long userId) {
         if (userStorage.findById(userId) == null) {
             logAndThrowNotFoundException(userId.toString());
         }
@@ -116,12 +116,12 @@ public class UserService implements UserInterface {
         return friends.getOrDefault(idUser, new HashSet<>()).contains(idFriend);
     }
 
-    private void logAndThrowConditionsNotMetException(String message) throws ConditionsNotMetException {
+    private void logAndThrowConditionsNotMetException(String message) {
         log.error("Exception", new ConditionsNotMetException(message));
         throw new ConditionsNotMetException(message);
     }
 
-    private void logAndThrowNotFoundException(String value) throws NotFoundException {
+    private void logAndThrowNotFoundException(String value) {
         log.error("Exception", new NotFoundException(value, UserService.ERROR_USER_NOT_FOUND));
         throw new NotFoundException(value, UserService.ERROR_USER_NOT_FOUND);
     }
