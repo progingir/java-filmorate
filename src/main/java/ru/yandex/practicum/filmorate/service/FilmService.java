@@ -80,10 +80,6 @@ public class FilmService implements FilmInterface {
         return FilmResponse.of(film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), new HashSet<>(), film.getMpa(), genres);
     }
 
-    public List<Film> viewRaiting(Long count) {
-        return List.of();
-    }
-
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
         LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
@@ -103,41 +99,5 @@ public class FilmService implements FilmInterface {
             }
         }
         return films;
-    }
-
-    public List<GenreConstant> viewGenre() {
-        log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(selectAllGenresQuery, new GenreExtractor());
-        List<GenreConstant> genreConstant = new ArrayList<>();
-        for (Long l : genre.keySet())
-            genreConstant.add(GenreConstant.of(l, genre.get(l)));
-        return genreConstant;
-    }
-
-    public GenreConstant viewGenreName(Long id) {
-        log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(selectGenreByIdQuery, new GenreExtractor(), id);
-        if (id < 0 || id > 7) {
-            log.error("Exception", new NotFoundException("Жанра с указанным идентификатором не существует."));
-            throw new NotFoundException("Жанра с указанным идентификатором не существует.");
-        } else return GenreConstant.of(id, genre.get(id));
-    }
-
-    public List<Mpa> viewFilmsRating() {
-        log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(selectAllRatingsQuery, new RatingNameExtractor());
-        List<Mpa> mpaConstant = new ArrayList<>();
-        for (Long l : genre.keySet())
-            mpaConstant.add(Mpa.of(l, genre.get(l)));
-        return mpaConstant;
-    }
-
-    public Mpa viewRatingName(Long id) {
-        log.info("Обработка Get-запроса...");
-        Map<Long, String> genre = jdbcTemplate.query(selectRatingByIdQuery, new RatingNameExtractor(), id);
-        if (id < 0 || id > 6) {
-            log.error("Exception", new NotFoundException("Рейтинг с указанным идентификатором не существует."));
-            throw new NotFoundException("Рейтинг с указанным идентификатором не существует.");
-        } else return Mpa.of(id, genre.get(id));
     }
 }
