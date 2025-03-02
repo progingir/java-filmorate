@@ -253,20 +253,33 @@ public class FilmDbStorage implements FilmStorage {
 
     private LinkedHashSet<Genre> processGenres(List<String> genres, Long filmId, Map<Long, String> genreMap) {
         LinkedHashSet<Genre> result = new LinkedHashSet<>();
+
+        // Если список жанров пуст или содержит "нет жанра", возвращаем пустой результат
         if (genres == null || genres.equals(List.of("нет жанра"))) {
             return result;
         }
 
-        for (String genreIdStr : genres) {
-            Long genreId = Long.parseLong(genreIdStr);
-            if (!(genreId > 0 && genreId < 7)) {
-                logAndThrowNotFoundException(genreId.toString(), ERROR_INVALID_GENRE);
+        for (String genreName : genres) {
+            // Проверяем наличие жанра в базе данных по имени
+            Long genreId = jdbcTemplate.queryForObject(
+                    "SELECT id FROM genres WHERE name = ?",
+                    Long.class,
+                    genreName
+            );
+
+            if (genreId == null) {
+                logAndThrowNotFoundException(genreName, ERROR_INVALID_GENRE);
             }
+
+            // Вставляем жанр в связь фильм-жанр
             jdbcTemplate.update(SQL_INSERT_FILM_GENRE, filmId, genreId);
+
+            // Добавляем жанр в результат
             result.add(Genre.of(genreId, genreMap.get(genreId)));
         }
         return result;
     }
+
 
     private void updateFilmRating(Long mpaId, Long filmId) {
         jdbcTemplate.update(SQL_UPDATE_FILM_RATING, mpaId, filmId);
