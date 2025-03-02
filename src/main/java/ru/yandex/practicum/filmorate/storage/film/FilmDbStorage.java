@@ -27,7 +27,7 @@ import java.util.*;
 @Slf4j(topic = "TRACE")
 @ConfigurationPropertiesScan
 @Component
-@Qualifier("FilmDbStorage")
+@Qualifier("filmDbStorage")
 public class FilmDbStorage implements FilmStorage {
 
     //SQL-запросы
@@ -116,11 +116,8 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQuery4 = "select id, ratingId from film";
         Map<Long, Long> filmRating = jdbcTemplate.query(sqlQuery4, new FilmRatingExtractor());
         for (Film film : films) {
-            assert likedUsers != null;
             film.setLikedUsers(likedUsers.get(film.getId()));
-            assert filmGenre != null;
             film.setGenres(filmGenre.get(film.getId()));
-            assert filmRating != null;
             film.setMpa(filmRating.get(film.getId()));
         }
         return films;
@@ -137,7 +134,7 @@ public class FilmDbStorage implements FilmStorage {
         try {
             jdbcTemplate.queryForObject(sqlQuery5, this::mapRowToFilm, id);
         } catch (DataAccessException e) {
-            assert id != null;
+
             logAndThrowNotFoundException(id.toString(), ERROR_FILM_NOT_FOUND);
         }
 
@@ -148,23 +145,22 @@ public class FilmDbStorage implements FilmStorage {
         Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(sqlQuery7, new FilmGenreExtractor(), id);
         String sqlQuery8 = "select id, ratingId from film where id = ?";
         Map<Long, Long> filmRating = jdbcTemplate.query(sqlQuery8, new FilmRatingExtractor(), id);
-        assert film != null;
-        assert likedUsers != null;
+
+
         film.setLikedUsers(likedUsers.get(id));
-        assert filmGenre != null;
+
         film.setGenres(filmGenre.get(id));
         Map<Long, String> genre = jdbcTemplate.query(SQL_SELECT_GENRES, new GenreExtractor());
         Map<Long, String> rating = jdbcTemplate.query(SQL_SELECT_RATINGS, new RatingNameExtractor());
         LinkedHashSet<Genre> genres = new LinkedHashSet<>();
         if (!filmGenre.isEmpty()) {
             for (Long g : filmGenre.get(id)) {
-                assert genre != null;
                 genres.add(Genre.of(g, genre.get(g)));
             }
         }
-        assert filmRating != null;
+
         film.setMpa(filmRating.get(id));
-        assert rating != null;
+
         return FilmRequest.of(film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), new HashSet<>(), Mpa.of(film.getMpa(), rating.get(film.getMpa())), genres);
     }
 
@@ -209,7 +205,6 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(SQL_UPDATE_FILM, oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(),
                 oldFilm.getDuration(), oldFilm.getMpa().getId(), oldFilm.getId());
 
-        assert rating != null;
         return FilmRequest.of(oldFilm.getId(), oldFilm.getName(), oldFilm.getDescription(), oldFilm.getReleaseDate(),
                 oldFilm.getDuration(), new HashSet<>(), Mpa.of(newFilm.getMpa(), rating.get(newFilm.getMpa())), genres);
     }
