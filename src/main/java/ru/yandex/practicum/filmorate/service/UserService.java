@@ -73,15 +73,16 @@ public class UserService implements UserInterface {
         validateUserExists(idUser);
         validateUserExists(idFriend);
 
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(SQL_SELECT_FRIENDS, new FriendsExtractor());
-        Set<Long> userFriends = friends.getOrDefault(idUser, new HashSet<>());
-        Set<Long> friendFriends = friends.getOrDefault(idFriend, new HashSet<>());
+        String SQL_SELECT_JOINT_FRIENDS = "SELECT f1.friendId AS jointFriendId " +
+                "FROM friends f1 " +
+                "JOIN friends f2 ON f1.friendId = f2.friendId " +
+                "WHERE f1.userId = ? AND f2.userId = ?";
 
-        Set<Long> jointFriends = new HashSet<>(userFriends);
-        jointFriends.retainAll(friendFriends);
+        Set<Long> jointFriendIds = new HashSet<>(jdbcTemplate.queryForList(
+                SQL_SELECT_JOINT_FRIENDS, Long.class, idUser, idFriend));
 
         Set<User> result = new HashSet<>();
-        for (Long friendId : jointFriends) {
+        for (Long friendId : jointFriendIds) {
             result.add(userStorage.findById(friendId));
         }
         return result;
