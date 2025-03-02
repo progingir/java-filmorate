@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS friendRequest (
     friendId BIGINT NOT NULL,
     accept BOOLEAN,
     FOREIGN KEY (userId) REFERENCES users (id)
+    FOREIGN KEY (friendId) REFERENCES users (id)
 );
 
 CREATE TABLE IF NOT EXISTS likedUsers (
