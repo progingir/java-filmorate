@@ -40,8 +40,8 @@ public class FilmService implements FilmInterface {
         if (userStorage.findById(idUser) != null && filmStorage.findById(idFilm) != null) {
             Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(selectLikedUsersQuery, new FilmDbStorage.LikedUsersExtractor());
             if (likedUsers.get(idFilm) != null && likedUsers.get(idFilm).contains(idUser)) {
-                log.error("Exception", new ConditionsNotMetException(idUser.toString()));
-                throw new ConditionsNotMetException(idUser.toString());
+                log.error("Пользователь с ID {} уже поставил лайк фильму с ID {}", idUser, idFilm);
+                throw new ConditionsNotMetException("Пользователь с ID " + idUser + " уже поставил лайк фильму с ID " + idFilm);
             } else {
                 jdbcTemplate.update(insertLikeQuery, idFilm, idUser);
             }
@@ -62,9 +62,11 @@ public class FilmService implements FilmInterface {
         if (userStorage.findById(idUser) != null && filmStorage.findById(idFilm) != null) {
             Map<Long, Set<Long>> likedUsers = jdbcTemplate.query(selectLikedUsersQuery, new FilmDbStorage.LikedUsersExtractor());
             if (likedUsers.get(idFilm) != null && !likedUsers.get(idFilm).contains(idUser)) {
-                log.error("Exception", new ConditionsNotMetException(idUser.toString()));
-                throw new ConditionsNotMetException(idUser.toString());
-            } else jdbcTemplate.update(deleteLikeQuery, idFilm, idUser);
+                log.error("Пользователь с ID {} не ставил лайк фильму с ID {}", idUser, idFilm);
+                throw new ConditionsNotMetException("Пользователь с ID " + idUser + " не ставил лайк фильму с ID " + idFilm);
+            } else {
+                jdbcTemplate.update(deleteLikeQuery, idFilm, idUser);
+            }
         }
         FilmResponse film = filmStorage.findById(idFilm);
         LinkedHashSet genres = new LinkedHashSet<>();
@@ -81,7 +83,7 @@ public class FilmService implements FilmInterface {
         LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
         LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
         if (likedUsers == null) {
-            log.error("Exception", new NotFoundException("Список фильмов с рейтингом пуст."));
+            log.error("Список фильмов с рейтингом пуст.");
             throw new NotFoundException("Список фильмов с рейтингом пуст.");
         } else {
             LinkedHashSet genres = new LinkedHashSet<>();
