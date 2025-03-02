@@ -1,73 +1,119 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Buffer;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.model.FilmRequest;
+import ru.yandex.practicum.filmorate.service.FilmInterface;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.Collection;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @RestController
 @RequestMapping("/films")
 public class FilmController {
 
-    private final FilmService filmService;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String DEFAULT_GENRE = "нет жанра";
+
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
+    private final FilmInterface filmInterface;
 
     @Autowired
-    public FilmController(FilmService filmService) {
-        this.filmService = filmService;
+    public FilmController(
+            @Qualifier("FilmDbStorage") FilmStorage filmStorage,
+            @Qualifier("UserDbStorage") UserStorage userStorage,
+            FilmInterface filmInterface
+    ) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+        this.filmInterface = filmInterface;
     }
 
-    //создание фильма
-    @PostMapping
-    public Film createFilm(@Valid @RequestBody Film film) {
-        return filmService.createFilm(film);
-    }
-
-    //обновление фильма
-    @PutMapping
-    public Film update(@Valid @RequestBody Film film) {
-        return filmService.update(film);
-    }
-
-    //получение всех фильмов
     @GetMapping
-    public Collection<Film> getFilms() {
-        return filmService.getFilms();
+    public List<Film> findAll() {
+        return filmStorage.findAll();
     }
 
-    //получение фильма по ID
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable Long id) {
-        return filmService.getFilmById(id);
+    public FilmRequest findById(@PathVariable("id") Long id) {
+        return filmStorage.findById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public FilmRequest create(@Valid @RequestBody ObjectNode objectNode) {
+        Buffer buffer = parseObjectNodeToBuffer(objectNode);
+        return filmStorage.create(buffer);
+    }
+
+    @PutMapping
+    public FilmRequest update(@Valid @RequestBody ObjectNode objectNode) {
+        Buffer buffer = parseObjectNodeToBuffer(objectNode);
+        return filmStorage.update(buffer);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<?> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        try {
-            filmService.addLike(id, userId);
-            return ResponseEntity.ok().build(); // Возвращаем 200 OK, если лайк добавлен
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage())); // Возвращаем 404 и JSON с ошибкой
-        }
+    public FilmRequest addLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+        return filmInterface.addLike(userId, id);
     }
 
-    //удаление лайка из фильма
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<Void> removeLike(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.removeLike(id, userId);
-        return ResponseEntity.ok().build();
+    public FilmRequest delLike(@Valid @PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+        return filmInterface.delLike(userId, id);
     }
 
-    //получение популярных фильмов
     @GetMapping("/popular")
-    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
-        return filmService.getTopFilms(count);
+    public LinkedHashSet<FilmRequest> viewRating(@RequestParam(required = false) Long count) {
+        return filmInterface.viewRating(count);
+    }
+
+    /**
+     * преобразует json объект в объект Buffer
+     *
+     * @param objectNode json объект
+     * @return объект Buffer
+     */
+    private Buffer parseObjectNodeToBuffer(ObjectNode objectNode) {
+        Long id = objectNode.has("id") ? objectNode.get("id").asLong() : 0L;
+        String name = objectNode.get("name").asText();
+        String description = objectNode.get("description").asText();
+        String releaseDate = objectNode.get("releaseDate").asText();
+        Integer duration = objectNode.get("duration").asInt();
+        List<String> mpa = objectNode.get("mpa").findValuesAsText("id");
+        List<String> genres = extractGenresFromObjectNode(objectNode);
+
+        return Buffer.of(
+                id,
+                name,
+                description,
+                LocalDate.parse(releaseDate, DATE_FORMATTER),
+                duration,
+                genres,
+                Long.valueOf(mpa.get(0))
+        );
+    }
+
+    /**
+     * извлекает список жанров из json объекта
+     *
+     * @param objectNode json объект
+     * @return список жанров
+     */
+    private List<String> extractGenresFromObjectNode(ObjectNode objectNode) {
+        try {
+            return objectNode.get("genres").findValuesAsText("id");
+        } catch (NullPointerException e) {
+            return List.of(DEFAULT_GENRE);
+        }
     }
 }
