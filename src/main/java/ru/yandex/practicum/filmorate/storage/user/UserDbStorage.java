@@ -26,22 +26,28 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j(topic = "TRACE")
-@ConfigurationPropertiesScan
-@Component
 @Qualifier("UserDbStorage")
 public class UserDbStorage implements UserStorage {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final JdbcTemplate jdbcTemplate;
 
-    private final String sqlQuery1 = "select id, name, email, login, birthday from users";
-    private final String sqlQuery2 = "select userId, friendId from friends";
-    private final String sqlQuery3 = "select id, name, email, login, birthday from users where id = ?";
-    private final String sqlQuery4 = "select email from users";
-    private final String sqlQuery5 = "update users set " + "name = ?, email = ?, login = ?, birthday = ? " + "where id = ?";
+    private final String SELECT_ALL_USERS = "SELECT id, name, email, login, birthday FROM users";
+    private final String SELECT_ALL_FRIENDSHIPS = "SELECT userId, friendId FROM friends";
+    private final String SELECT_USER_BY_ID = "SELECT id, name, email, login, birthday FROM users WHERE id = ?";
+    private final String SELECT_ALL_EMAILS = "SELECT email FROM users";
+    private final String UPDATE_USER = "UPDATE users SET name = ?, email = ?, login = ?, birthday = ? WHERE id = ?";
 
     private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
-        return User.builder().id(resultSet.getLong("id")).name(resultSet.getString("name")).email(resultSet.getString("email")).login(resultSet.getString("login")).birthday(resultSet.getDate("birthday").toLocalDate()).friends(new HashSet<>()).friendRequests(new HashSet<>()).build();
+        return User.builder()
+                .id(resultSet.getLong("id"))
+                .name(resultSet.getString("name"))
+                .email(resultSet.getString("email"))
+                .login(resultSet.getString("login"))
+                .birthday(resultSet.getDate("birthday").toLocalDate())
+                .friends(new HashSet<>())
+                .friendRequests(new HashSet<>())
+                .build();
     }
 
     public static class FriendsExtractor implements ResultSetExtractor<Map<Long, Set<Long>>> {
@@ -70,29 +76,29 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
+    @Override
     public Collection<User> findAll() {
         log.info("Обработка Get-запроса...");
-        Collection<User> users = jdbcTemplate.query(sqlQuery1, this::mapRowToUser);
-        Map<Long, Set<Long>> friends = jdbcTemplate.query(sqlQuery2, new FriendsExtractor());
+        Collection<User> users = jdbcTemplate.query(SELECT_ALL_USERS, this::mapRowToUser);
+        Map<Long, Set<Long>> friends = jdbcTemplate.query(SELECT_ALL_FRIENDSHIPS, new FriendsExtractor());
         for (User user : users) {
             user.setFriends(friends.get(user.getId()));
         }
         return users;
     }
 
+    @Override
     public User findById(Long id) {
         log.info("Обработка Get-запроса...");
-        if (id != 0 && !id.equals(null)) {
+        if (id != 0 && id != null) {
             try {
-                jdbcTemplate.queryForObject(sqlQuery3, this::mapRowToUser, id);
+                jdbcTemplate.queryForObject(SELECT_USER_BY_ID, this::mapRowToUser, id);
             } catch (DataAccessException e) {
-                if (e != null) {
-                    log.error("Exception", new NotFoundException("Пользователь с данным идентификатором отсутствует в базе"));
-                    throw new NotFoundException("Пользователь с данным идентификатором отсутствует в базе");
-                }
+                log.error("Exception", new NotFoundException("Пользователь с данным идентификатором отсутствует в базе"));
+                throw new NotFoundException("Пользователь с данным идентификатором отсутствует в базе");
             }
-            User user = jdbcTemplate.queryForObject(sqlQuery3, this::mapRowToUser, id);
-            Map<Long, Set<Long>> friends = jdbcTemplate.query(sqlQuery2, new FriendsExtractor());
+            User user = jdbcTemplate.queryForObject(SELECT_USER_BY_ID, this::mapRowToUser, id);
+            Map<Long, Set<Long>> friends = jdbcTemplate.query(SELECT_ALL_FRIENDSHIPS, new FriendsExtractor());
             user.setFriends(friends.get(id));
             return user;
         } else {
@@ -105,28 +111,24 @@ public class UserDbStorage implements UserStorage {
         return List.of();
     }
 
+    @Override
     public User create(@Valid User user) {
         log.info("Обработка Create-запроса...");
 
-        // Проверка на дубликат email
         duplicateCheck(user);
 
-        // Проверка email
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
 
-        // Проверка логина
         if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
 
-        // Проверка имени
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
 
-        // Проверка даты рождения
         if (user.getBirthday() == null) {
             throw new ValidationException("Дата рождения не может быть нулевой");
         }
@@ -134,7 +136,6 @@ public class UserDbStorage implements UserStorage {
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
 
-        // Создание пользователя
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("users")
                 .usingGeneratedKeyColumns("id");
@@ -145,48 +146,42 @@ public class UserDbStorage implements UserStorage {
     }
 
     private void duplicateCheck(User user) {
-        Set<String> emails = jdbcTemplate.query(sqlQuery4, new EmailExtractor());
+        Set<String> emails = jdbcTemplate.query(SELECT_ALL_EMAILS, new EmailExtractor());
         if (emails.contains(user.getEmail())) {
             log.error("Exception", new DuplicatedDataException("Этот имейл уже используется"));
             throw new DuplicatedDataException("Этот имейл уже используется");
         }
     }
 
+    @Override
     public User update(@Valid User newUser) {
         log.info("Обработка Update-запроса...");
 
-        // Проверка на наличие ID
         if (newUser.getId() == null) {
             throw new ValidationException("Id должен быть указан");
         }
 
-        // Поиск существующего пользователя
         User oldUser = findById(newUser.getId());
         if (oldUser == null) {
             throw new NotFoundException("Пользователь с указанным id не найден");
         }
 
-        // Проверка email
         if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")) {
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
 
-        // Проверка на дубликат email
         if (!newUser.getEmail().equals(oldUser.getEmail())) {
             duplicateCheck(newUser);
         }
 
-        // Проверка логина
         if (newUser.getLogin() == null || newUser.getLogin().isBlank() || newUser.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
 
-        // Проверка имени
         if (newUser.getName() == null || newUser.getName().isBlank()) {
             newUser.setName(newUser.getLogin());
         }
 
-        // Проверка даты рождения
         if (newUser.getBirthday() == null) {
             throw new ValidationException("Дата рождения не может быть нулевой");
         }
@@ -194,8 +189,7 @@ public class UserDbStorage implements UserStorage {
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
 
-        // Обновление пользователя
-        jdbcTemplate.update(sqlQuery5,
+        jdbcTemplate.update(UPDATE_USER,
                 newUser.getName(),
                 newUser.getEmail(),
                 newUser.getLogin(),
