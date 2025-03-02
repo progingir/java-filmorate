@@ -105,7 +105,7 @@ public class UserDbStorage implements UserStorage {
         return List.of();
     }
 
-    public User create(@Valid User user) throws DuplicatedDataException, ValidationException {
+    public User create(@Valid User user) {
         log.info("Обработка Create-запроса...");
 
         // Проверка на дубликат email
@@ -144,7 +144,7 @@ public class UserDbStorage implements UserStorage {
         return user;
     }
 
-    private void duplicateCheck(User user) throws DuplicatedDataException {
+    private void duplicateCheck(User user) {
         Set<String> emails = jdbcTemplate.query(sqlQuery4, new EmailExtractor());
         if (emails.contains(user.getEmail())) {
             log.error("Exception", new DuplicatedDataException("Этот имейл уже используется"));
@@ -152,7 +152,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public User update(@Valid User newUser) throws DuplicatedDataException, ValidationException {
+    public User update(@Valid User newUser) {
         log.info("Обработка Update-запроса...");
 
         // Проверка на наличие ID

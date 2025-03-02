@@ -44,7 +44,6 @@ public class UserController {
      *
      * @param id идентификатор пользователя
      * @return объект пользователя
-     * @throws ConditionsNotMetException если идентификатор пользователя некорректен
      */
     @GetMapping(USER_ID_PATH)
     public User findById(@PathVariable("id") Long id) {
@@ -56,8 +55,6 @@ public class UserController {
      *
      * @param user объект пользователя
      * @return созданный пользователь
-     * @throws ConditionsNotMetException если данные пользователя некорректны
-     * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -70,9 +67,6 @@ public class UserController {
      *
      * @param newUser объект пользователя с новыми данными
      * @return обновленный пользователь
-     * @throws ConditionsNotMetException если данные пользователя некорректны
-     * @throws NotFoundException         если пользователь с указанным id не найден
-     * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @PutMapping
     public User update(@Valid @RequestBody User newUser) {
@@ -85,9 +79,6 @@ public class UserController {
      * @param id       идентификатор пользователя
      * @param friendId идентификатор друга
      * @return пользователь с обновленным списком друзей
-     * @throws ConditionsNotMetException если пользователь уже добавлен в друзья
-     * @throws NotFoundException         если пользователь или друг не найдены
-     * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @PutMapping(FRIEND_ID_PATH)
     public User addFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
@@ -100,9 +91,6 @@ public class UserController {
      * @param id       идентификатор пользователя
      * @param friendId идентификатор друга
      * @return пользователь с обновленным списком друзей
-     * @throws ConditionsNotMetException если пользователь не найден в списке друзей
-     * @throws NotFoundException         если пользователь или друг не найдены
-     * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @DeleteMapping(FRIEND_ID_PATH)
     public User delFriend(@Valid @PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
@@ -115,9 +103,6 @@ public class UserController {
      * @param id      идентификатор первого пользователя
      * @param otherId идентификатор второго пользователя
      * @return список общих друзей
-     * @throws ConditionsNotMetException если пользователи не найдены
-     * @throws NotFoundException         если пользователи не найдены
-     * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @GetMapping(COMMON_FRIENDS_PATH)
     public Set<User> findJointFriends(@Valid @PathVariable("id") Long id, @PathVariable("otherId") Long otherId) {
@@ -129,9 +114,6 @@ public class UserController {
      *
      * @param id идентификатор пользователя
      * @return список друзей
-     * @throws ConditionsNotMetException если пользователь не найден
-     * @throws NotFoundException         если пользователь не найден
-     * @throws DuplicatedDataException   если email пользователя уже используется
      */
     @GetMapping(FRIENDS_PATH)
     public Set<User> findAllFriends(@Valid @PathVariable("id") Long id) {
