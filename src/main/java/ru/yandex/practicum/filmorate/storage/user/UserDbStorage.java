@@ -79,10 +79,6 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public Collection<User> getFriends(Long id) {
-        return List.of();
-    }
-
     @Override
     public User create(@Valid User user) {
         log.info("Обработка Create-запроса...");
