@@ -25,8 +25,6 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j(topic = "TRACE")
-@ConfigurationPropertiesScan
-@Component
 @Qualifier("FilmDbStorage")
 public class FilmDbStorage implements FilmStorage {
 
