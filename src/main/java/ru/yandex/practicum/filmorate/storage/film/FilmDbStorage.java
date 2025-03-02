@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.GenreExtractor;
 import ru.yandex.practicum.filmorate.service.RatingNameExtractor;
 
