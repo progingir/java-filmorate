@@ -80,22 +80,42 @@ public class FilmService implements FilmInterface {
 
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
+
+        if (count == null || count <= 0) {
+            throw new IllegalArgumentException("Count must be greater than zero.");
+        }
+
+        String selectTopFilmsQueryWithLimit = selectTopFilmsQuery + " LIMIT ?";
+        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQueryWithLimit, new TopLikedUsersExtractor(), count);
+
         LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
-        if (likedUsers == null) {
+        if (likedUsers.isEmpty()) {
             log.error("Список фильмов с рейтингом пуст.");
             throw new NotFoundException("Список фильмов с рейтингом пуст.");
         } else {
-            LinkedHashSet genres = new LinkedHashSet<>();
-            for (Long l : likedUsers.keySet()) {
-                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
-                if (!filmGenre.isEmpty()) {
-                    for (Long g : filmGenre.get(filmStorage.findById(l).getId()))
-                        genres.add(g);
+            for (Long filmId : likedUsers.keySet()) {
+                FilmResponse film = filmStorage.findById(filmId);
+                if (film != null) {
+
+                    Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), film.getId());
+                    assert filmGenre != null;
+                    LinkedHashSet<Long> genres = filmGenre.getOrDefault(film.getId(), new LinkedHashSet<>());
+
+                    // Create FilmResponse object
+                    films.add(FilmResponse.of(
+                            film.getId(),
+                            film.getName(),
+                            film.getDescription(),
+                            film.getReleaseDate(),
+                            film.getDuration(),
+                            new HashSet<>(), // Assuming this is for liked users, adjust as necessary
+                            film.getMpa(),
+                            new LinkedHashSet<>()
+                    ));
                 }
-                films.add(FilmResponse.of(filmStorage.findById(l).getId(), filmStorage.findById(l).getName(), filmStorage.findById(l).getDescription(), filmStorage.findById(l).getReleaseDate(), filmStorage.findById(l).getDuration(), new HashSet<>(), filmStorage.findById(l).getMpa(), genres));
             }
         }
         return films;
     }
+
 }
