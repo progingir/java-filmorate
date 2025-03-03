@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Buffer;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmResponse;
 import ru.yandex.practicum.filmorate.service.FilmInterface;
@@ -44,12 +45,12 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmResponse create(@Valid @RequestBody Film film) {
+    public FilmResponse create(@Valid @RequestBody Buffer film) {
         return filmStorage.create(film);
     }
 
     @PutMapping
-    public FilmResponse update(@Valid @RequestBody Film film) {
+    public FilmResponse update(@Valid @RequestBody Buffer film) {
         return filmStorage.update(film);
     }
 
