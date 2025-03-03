@@ -257,7 +257,7 @@ public class FilmDbStorage implements FilmStorage {
 
         for (String genreIdStr : genres) {
             Long genreId = Long.parseLong(genreIdStr);
-            if (!(genreId > 0 && genreId < 7)) {
+            if (!genreMap.containsKey(genreId)) {
                 logAndThrowNotFoundException(genreId.toString(), ERROR_INVALID_GENRE);
             }
             jdbcTemplate.update(SQL_INSERT_FILM_GENRE, filmId, genreId);
@@ -265,6 +265,7 @@ public class FilmDbStorage implements FilmStorage {
         }
         return result;
     }
+
 
     private void updateFilmRating(Long mpaId, Long filmId) {
         jdbcTemplate.update(SQL_UPDATE_FILM_RATING, mpaId, filmId);
