@@ -31,7 +31,7 @@ public class FilmController {
     @Autowired
     public FilmController(
             @Qualifier("FilmDbStorage") FilmStorage filmStorage,
-            @Qualifier("UserDbStorage") UserStorage userStorage,
+            @Qualifier("userDbStorage") UserStorage userStorage,
             FilmInterface filmInterface
     ) {
         this.filmStorage = filmStorage;

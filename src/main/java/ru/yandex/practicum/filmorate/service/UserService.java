@@ -36,7 +36,7 @@ public class UserService implements UserInterface {
     private static final String ERROR_USER_NOT_FOUND = "Пользователь с данным идентификатором отсутствует в базе";
 
     @Autowired
-    @Qualifier("UserDbStorage")
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
     private final JdbcTemplate jdbcTemplate;
 
