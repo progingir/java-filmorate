@@ -12,7 +12,7 @@ public interface FilmStorage {
 
     FilmResponse findById(Long id);
 
-    FilmResponse create(Buffer film);
+    FilmResponse create(Film film);
 
-    FilmResponse update(Buffer newFilm);
+    FilmResponse update(Film newFilm);
 }

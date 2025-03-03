@@ -183,6 +183,15 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public FilmResponse create(Film film) {
+        return null;
+    }
+
+    @Override
+    public FilmResponse update(Film newFilm) {
+        return null;
+    }
+
     public FilmResponse create(@Valid Buffer buffer) {
         log.info(LOG_CREATE_REQUEST);
         validateBuffer(buffer);
@@ -199,7 +208,6 @@ public class FilmDbStorage implements FilmStorage {
         return FilmResponse.of(filmId, buffer.getName(), buffer.getDescription(), buffer.getReleaseDate(), buffer.getDuration(), new HashSet<>(), Mpa.of(buffer.getMpa(), rating.get(buffer.getMpa())), genres);
     }
 
-    @Override
     public FilmResponse update(@Valid Buffer newFilm) {
         log.info(LOG_UPDATE_REQUEST);
         if (newFilm.getId() == null) {

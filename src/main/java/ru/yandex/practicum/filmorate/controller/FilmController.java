@@ -4,23 +4,18 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Buffer;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmResponse;
 import ru.yandex.practicum.filmorate.service.FilmInterface;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final String DEFAULT_GENRE = "нет жанра";
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
@@ -49,15 +44,13 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmResponse create(@Valid @RequestBody FilmResponse filmRequest) {
-        Buffer buffer = parseFilmRequestToBuffer(filmRequest);
-        return filmStorage.create(buffer);
+    public FilmResponse create(@Valid @RequestBody Film film) {
+        return filmStorage.create(film);
     }
 
     @PutMapping
-    public FilmResponse update(@Valid @RequestBody FilmResponse filmRequest) {
-        Buffer buffer = parseFilmRequestToBuffer(filmRequest);
-        return filmStorage.update(buffer);
+    public FilmResponse update(@Valid @RequestBody Film film) {
+        return filmStorage.update(film);
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -74,28 +67,4 @@ public class FilmController {
     public LinkedHashSet<FilmResponse> viewRating(@RequestParam(defaultValue = "10") Long count) {
         return filmInterface.viewRating(count);
     }
-
-    /**
-     * преобразует FilmRequest в объект Buffer
-     *
-     * @param filmRequest объект FilmRequest
-     * @return объект Buffer
-     */
-    private Buffer parseFilmRequestToBuffer(FilmResponse filmRequest) {
-        List<String> genreIds = filmRequest.getGenres().stream()
-                .map(Genre::getId) // Получаем id каждого жанра
-                .map(String::valueOf) // Преобразуем Long в String
-                .toList(); // Собираем в List
-
-        return Buffer.of(
-                filmRequest.getId(),
-                filmRequest.getName(),
-                filmRequest.getDescription(),
-                filmRequest.getReleaseDate(),
-                filmRequest.getDuration(),
-                genreIds, // Теперь это List<String>
-                filmRequest.getMpa().getId()
-        );
-    }
-
 }
