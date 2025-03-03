@@ -2,13 +2,11 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.FilmResponse;
 import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -17,13 +15,11 @@ import java.util.*;
 
 @Service
 @Slf4j(topic = "TRACE")
-@ConfigurationPropertiesScan
 @RequiredArgsConstructor
 public class FilmService implements FilmInterface {
-    @Autowired
-    UserStorage userStorage;
-    @Autowired
-    FilmStorage filmStorage;
+
+    private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
     private final JdbcTemplate jdbcTemplate;
 
     // SQL-запросы
@@ -32,7 +28,6 @@ public class FilmService implements FilmInterface {
     private final String selectFilmGenresQuery = "select filmId, genreId from filmGenre where filmId = ?";
     private final String deleteLikeQuery = "delete from likedUsers where filmId = ? and userId = ?";
     private final String selectTopFilmsQuery = "select f.id as name, COUNT(l.userId) as coun from likedUsers as l LEFT OUTER JOIN film AS f ON l.filmId = f.id GROUP BY f.name ORDER BY COUNT(l.userId) DESC LIMIT 10";
-
 
     @Override
     public FilmResponse addLike(Long idUser, Long idFilm) {
