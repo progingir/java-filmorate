@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.FilmResponse;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -75,20 +76,39 @@ public class FilmService implements FilmInterface {
 
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
+
+        String limitedSelectTopFilmsQuery = selectTopFilmsQuery + " LIMIT " + count;
+
+        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(limitedSelectTopFilmsQuery, new TopLikedUsersExtractor());
         LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
-        if (likedUsers == null) {
+
+        if (likedUsers == null || likedUsers.isEmpty()) {
             log.error("Список фильмов с рейтингом пуст.");
             throw new NotFoundException("Список фильмов с рейтингом пуст.");
         } else {
-            LinkedHashSet genres = new LinkedHashSet<>();
             for (Long l : likedUsers.keySet()) {
-                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
+                LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery,
+                        new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
+
                 if (!filmGenre.isEmpty()) {
-                    for (Long g : filmGenre.get(filmStorage.findById(l).getId()))
-                        genres.add(g);
+                    for (Long genreId : filmGenre.get(filmStorage.findById(l).getId())) {
+                        String genreName = jdbcTemplate.queryForObject("SELECT name FROM genres WHERE id = ?",
+                                new Object[]{genreId}, String.class);
+                        genres.add(Genre.of(genreId, genreName)); // Создаем жанр с id и name
+                    }
                 }
-                films.add(FilmResponse.of(filmStorage.findById(l).getId(), filmStorage.findById(l).getName(), filmStorage.findById(l).getDescription(), filmStorage.findById(l).getReleaseDate(), filmStorage.findById(l).getDuration(), new HashSet<>(), filmStorage.findById(l).getMpa(), genres));
+
+                films.add(FilmResponse.of(
+                        filmStorage.findById(l).getId(),
+                        filmStorage.findById(l).getName(),
+                        filmStorage.findById(l).getDescription(),
+                        filmStorage.findById(l).getReleaseDate(),
+                        filmStorage.findById(l).getDuration(),
+                        new HashSet<>(),
+                        filmStorage.findById(l).getMpa(),
+                        genres
+                ));
             }
         }
         return films;
