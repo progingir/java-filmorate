@@ -45,13 +45,13 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmResponse create(@Valid @RequestBody Buffer film) {
-        return filmStorage.create(film);
+    public FilmResponse create(@Valid @RequestBody Buffer buffer) {
+        return filmStorage.create(buffer);
     }
 
     @PutMapping
-    public FilmResponse update(@Valid @RequestBody Buffer film) {
-        return filmStorage.update(film);
+    public FilmResponse update(@Valid @RequestBody Buffer buffer) {
+        return filmStorage.update(buffer);
     }
 
     @PutMapping("/{id}/like/{userId}")
