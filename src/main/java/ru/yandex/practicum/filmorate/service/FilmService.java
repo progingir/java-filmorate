@@ -2,15 +2,19 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.FilmResponse;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -75,22 +79,69 @@ public class FilmService implements FilmInterface {
 
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
-        LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
-        if (likedUsers == null) {
+
+        if (count == null || count <= 0) {
+            log.error("Некорректное значение параметра count: {}", count);
+            throw new IllegalArgumentException("Параметр count должен быть положительным числом.");
+        }
+
+        String query = """
+            SELECT f.id AS film_id,
+                   f.name AS film_name,
+                   f.description AS film_description,
+                   f.release_date AS film_release_date,
+                   f.duration AS film_duration,
+                   f.mpa_id AS film_mpa_id,
+                   m.name AS mpa_name,
+                   g.id AS genre_id,
+                   g.name AS genre_name,
+                   COUNT(l.user_id) OVER (PARTITION BY f.id) AS likes_count
+            FROM films f
+            LEFT JOIN film_genres fg ON f.id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.id
+            LEFT JOIN likes l ON f.id = l.film_id
+            LEFT JOIN mpa m ON f.mpa_id = m.id
+            ORDER BY likes_count DESC, f.id ASC
+            LIMIT ?
+            """;
+
+        try {
+            Map<Long, FilmResponse> filmMap = new LinkedHashMap<>();
+            jdbcTemplate.query(query, (rs, rowNum) -> {
+                Long filmId = rs.getLong("film_id");
+                String name = rs.getString("film_name");
+                String description = rs.getString("film_description");
+                LocalDate releaseDate = rs.getDate("film_release_date").toLocalDate();
+                Integer duration = rs.getInt("film_duration");
+                Long mpaId = rs.getLong("film_mpa_id");
+                String mpaName = rs.getString("mpa_name");
+                Long genreId = rs.getObject("genre_id", Long.class);
+                String genreName = rs.getString("genre_name");
+
+                // Создаем объект Mpa
+                Mpa mpa = Mpa.of(mpaId, mpaName);
+
+                // Создаем или обновляем фильм
+                FilmResponse film = filmMap.get(filmId);
+                if (film == null) {
+                    LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+                    if (genreId != null && genreName != null) {
+                        genres.add(Genre.of(genreId, genreName));
+                    }
+                    film = FilmResponse.of(filmId, name, description, releaseDate, duration, null, mpa, genres);
+                    filmMap.put(filmId, film);
+                } else {
+                    if (genreId != null && genreName != null) {
+                        film.getGenres().add(Genre.of(genreId, genreName));
+                    }
+                }
+                return null;
+            }, count);
+
+            return new LinkedHashSet<>(filmMap.values());
+        } catch (EmptyResultDataAccessException e) {
             log.error("Список фильмов с рейтингом пуст.");
             throw new NotFoundException("Список фильмов с рейтингом пуст.");
-        } else {
-            LinkedHashSet genres = new LinkedHashSet<>();
-            for (Long l : likedUsers.keySet()) {
-                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
-                if (!filmGenre.isEmpty()) {
-                    for (Long g : filmGenre.get(filmStorage.findById(l).getId()))
-                        genres.add(g);
-                }
-                films.add(FilmResponse.of(filmStorage.findById(l).getId(), filmStorage.findById(l).getName(), filmStorage.findById(l).getDescription(), filmStorage.findById(l).getReleaseDate(), filmStorage.findById(l).getDuration(), new HashSet<>(), filmStorage.findById(l).getMpa(), genres));
-            }
         }
-        return films;
     }
 }
