@@ -22,7 +22,6 @@ public class UserController {
     private static final String FRIEND_ID_PATH = FRIENDS_PATH + "/{friendId}";
     private static final String COMMON_FRIENDS_PATH = USER_ID_PATH + "/friends/common/{otherId}";
 
-    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
     private final UserInterface userInterface;
 

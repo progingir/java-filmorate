@@ -23,7 +23,6 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j(topic = "TRACE")
-@Qualifier("userDbStorage")
 public class UserDbStorage implements UserStorage {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
