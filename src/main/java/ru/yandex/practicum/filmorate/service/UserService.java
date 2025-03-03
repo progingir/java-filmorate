@@ -2,8 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -18,7 +16,6 @@ import java.util.Set;
 
 @Service
 @Slf4j(topic = "TRACE")
-@ConfigurationPropertiesScan
 @RequiredArgsConstructor
 public class UserService implements UserInterface {
 
