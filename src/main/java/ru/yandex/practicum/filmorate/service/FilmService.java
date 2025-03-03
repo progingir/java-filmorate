@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.FilmResponse;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -75,72 +74,23 @@ public class FilmService implements FilmInterface {
     }
 
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
-        log.info("Обработка Get-запроса для получения топ {} фильмов...", count);
-
-        if (count == null || count <= 0) {
-            log.error("Параметр count должен быть положительным числом");
-            throw new ConditionsNotMetException("Количество фильмов должно быть положительным числом");
-        }
-
-        String limitedTopFilmsQuery = "SELECT f.id as name, COUNT(l.userId) as coun " +
-                "FROM likedUsers as l " +
-                "LEFT OUTER JOIN film AS f ON l.filmId = f.id " +
-                "GROUP BY f.name " +
-                "ORDER BY COUNT(l.userId) DESC " +
-                "LIMIT ?";
-
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(
-                limitedTopFilmsQuery,
-                new TopLikedUsersExtractor(),
-                count
-        );
-
+        log.info("Обработка Get-запроса...");
+        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor(), count);
         LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
-        if (likedUsers == null || likedUsers.isEmpty()) {
+        if (likedUsers == null) {
             log.error("Список фильмов с рейтингом пуст.");
             throw new NotFoundException("Список фильмов с рейтингом пуст.");
         } else {
-            for (Long filmId : likedUsers.keySet()) {
-                FilmResponse film = filmStorage.findById(filmId);
-                LinkedHashSet<Genre> genres = new LinkedHashSet<>();
-
-                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(
-                        selectFilmGenresQuery,
-                        new FilmDbStorage.FilmGenreExtractor(),
-                        filmId
-                );
-
-                if (!filmGenre.isEmpty() && filmGenre.get(filmId) != null) {
-                    for (Long genreId : filmGenre.get(filmId)) {
-                        genres.add(getGenreById(genreId));
-                    }
+            LinkedHashSet genres = new LinkedHashSet<>();
+            for (Long l : likedUsers.keySet()) {
+                Map<Long, LinkedHashSet<Long>> filmGenre = jdbcTemplate.query(selectFilmGenresQuery, new FilmDbStorage.FilmGenreExtractor(), filmStorage.findById(l).getId());
+                if (!filmGenre.isEmpty()) {
+                    for (Long g : filmGenre.get(filmStorage.findById(l).getId()))
+                        genres.add(g);
                 }
-
-                films.add(FilmResponse.of(
-                        film.getId(),
-                        film.getName(),
-                        film.getDescription(),
-                        film.getReleaseDate(),
-                        film.getDuration(),
-                        new HashSet<>(),
-                        film.getMpa(),
-                        genres
-                ));
-
-                if (films.size() >= count) {
-                    break;
-                }
+                films.add(FilmResponse.of(filmStorage.findById(l).getId(), filmStorage.findById(l).getName(), filmStorage.findById(l).getDescription(), filmStorage.findById(l).getReleaseDate(), filmStorage.findById(l).getDuration(), new HashSet<>(), filmStorage.findById(l).getMpa(), genres));
             }
         }
         return films;
-    }
-
-    private Genre getGenreById(Long genreId) {
-        String genreQuery = "SELECT id, name FROM genres WHERE id = ?";
-        return jdbcTemplate.queryForObject(
-                genreQuery,
-                (rs, rowNum) -> Genre.of(rs.getLong("id"), rs.getString("name")),
-                genreId
-        );
     }
 }
