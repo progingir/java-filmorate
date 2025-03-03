@@ -75,7 +75,7 @@ public class FilmService implements FilmInterface {
 
     public LinkedHashSet<FilmResponse> viewRating(Long count) {
         log.info("Обработка Get-запроса...");
-        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor(), count);
+        LinkedHashMap<Long, Long> likedUsers = jdbcTemplate.query(selectTopFilmsQuery, new TopLikedUsersExtractor());
         LinkedHashSet<FilmResponse> films = new LinkedHashSet<>();
         if (likedUsers == null) {
             log.error("Список фильмов с рейтингом пуст.");
