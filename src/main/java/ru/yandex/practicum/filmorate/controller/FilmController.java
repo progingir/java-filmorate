@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Buffer;
@@ -30,7 +29,6 @@ public class FilmController {
 
     @Autowired
     public FilmController(
-            @Qualifier("FilmDbStorage")
             FilmStorage filmStorage,
             UserStorage userStorage,
             FilmInterface filmInterface
