@@ -45,12 +45,12 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmResponse create(@Valid @RequestBody Buffer film) {
+    public FilmResponse create(@Valid @RequestBody Film film) {
         return filmStorage.create(film);
     }
 
     @PutMapping
-    public FilmResponse update(@Valid @RequestBody Buffer film) {
+    public FilmResponse update(@Valid @RequestBody Film film) {
         return filmStorage.update(film);
     }
 
