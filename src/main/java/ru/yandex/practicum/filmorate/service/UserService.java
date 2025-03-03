@@ -34,7 +34,6 @@ public class UserService implements UserInterface {
     private static final String ERROR_FRIEND_ALREADY_ADDED = "Пользователь с id %d уже добавлен в друзья";
     private static final String ERROR_USER_NOT_FOUND = "Пользователь с данным идентификатором отсутствует в базе";
 
-    @Autowired
     private final UserStorage userStorage;
     private final JdbcTemplate jdbcTemplate;
 
